@@ -5,3 +5,10 @@ name:
 email: cdyer@cs.cmu.edu
 leaderboard: ProfDyer
 languages: [eng,deu]
+
+name:
+   first: Wes
+   last: Feely
+email: wfeely@cs.cmu.edu
+leaderboard: wfeely
+languages: [eng,spa,chi]
