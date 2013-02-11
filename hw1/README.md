@@ -1,17 +1,10 @@
-There are three Python programs here (`-h` for usage):
+Serena Jeblee
+Wes Feely
+MT Homework 1
 
- - `./align` aligns words using Dice's coefficient.
- - `./check` checks for out-of-bounds alignment points.
- - `./grade` computes alignment error rate.
+First we implemented IBM Model 1 using the first 15,000 sentences as training data. We then added a transition probability matrix based on the gold-aligned data following the algorithm suggested in the HMM-based alignment paper. This showed improvements over IBM Model 1 when we multiplied together the translation probabilities with these transition probabilities.
 
-The commands are designed to work in a pipeline. For instance, this is a valid invocation:
+We added smoothing for the transition probabilities following the HMM paper, but instead of using the ML estimates for the smoothing factor, we used a hand-tuned constant factor. We further improved the alignments by adding a "null" token to the German sentences.
 
-    ./align -t 0.9 -n 1000 | ./check | ./grade -n 5
-
-
-The `data/` directory contains a fragment of the German/English Europarl corpus.
-
- - `data/dev-test-train.de-en` is the German/English parallel data to be aligned. The first 150 sentences are for development; the next 150 is a blind set you will be evaluated on; and the remainder of the file is unannotated parallel data.
-
- - `data/dev.align` contains 150 manual alignments corresponding to the first 150 sentences of the parallel corpus. When you run `./check` these are used to compute the alignment error rate. You may use these in any way you choose. The notation `i-j` means the word at position *i* (0-indexed) in the German sentence is aligned to the word at position *j* in the English sentence; the notation `i?j` means they are "probably" aligned.
+We reconfigured our translation probabilities to initialize to better values so that we could run fewer iterations of EM and still converge. Finally we ran the system on a larger dataset of 30,000 sentences and got our final result.
 
