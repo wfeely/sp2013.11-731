@@ -1,24 +1,17 @@
 #!/usr/bin/python
 #model1.py
 #Weston Feely
-#2/9/13
+#2/11/13
 import sys
 
 def main(args):
-	#Check for correct args
-	if len(args) < 2:
-		print 'Usage: python model1.py dev-test-train.de-en #EM_iterations'
-		return 1
-	if int(args[2]) < 1:
-		print 'Error! Invalid number of EM iterations.'
-		return 1
 	#Get data from file
 	print 'Reading sentence-aligned data from file'
-	data = open(args[1]).readlines()
+	data = open('data/dev-test-train.de-en').readlines()
 	sentence_pairs = []
 	i=1
 	for line in data:
-		if i >= 15000:
+		if i > 15000:
 			break
 		lis = line.split('|||')
 		f_sent = lis[0].strip().split() #German sentence
@@ -37,13 +30,20 @@ def main(args):
 		for e in e_sent:
 			for f in f_sent:
 				t[(e,f)] = 1.0
+	#Read German counts from file
+	gcountsdata = open('m1german_counts.txt').readlines()
+	fcounts = {}
+	for line in gcountsdata:
+		lis = line.split()
+		fcounts[lis[0]] = int(lis[1])
+	#Normalize by number of English word translations for each German word
 	for (e,f) in t:
-		t[(e,f)] = t[(e,f)] / len(t)
+		t[(e,f)] = t[(e,f)] / fcounts[f]
 	#Iterate EM until convergence
 	sys.stdout.write(str('\nRunning EM'))
 	sys.stdout.flush()
 	iterations = 0
-	while (iterations < int(args[2])):
+	while (iterations < 5):
 		sys.stdout.write(str('.'))
 		sys.stdout.flush()
 		#Initialize
@@ -70,7 +70,7 @@ def main(args):
 		iterations+=1
 	#Align sentences based on model
 	print '\nAligning Sentences'
-	outfile = open('output.txt','w')
+	outfile = open('m1out.txt','w')
 	for (e_sent,f_sent) in sentence_pairs:
 		aligns = []
 		#Loop through English words
