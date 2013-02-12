@@ -123,7 +123,7 @@ public class Align {
 			alignfile.close();
 
 			int counter = 0;
-			while (infile.hasNextLine() && counter < 30000) {
+			while (infile.hasNextLine() && counter < 40000) {
 				if ((counter % 10000) == 0)
 					System.out.print("\n" + counter / 1000);
 				else if ((counter % 1000) == 0)
@@ -182,10 +182,7 @@ public class Align {
 						transprob.put(key, jumpwidth.get(j - jprime)
 								/ (double) sum);
 						// smooth prob
-						transprob
-								.put(key,
-										0.99 * ((0.00001 / ((double) D)) + (0.99999 * transprob
-												.get(key))));
+						transprob.put(key, 0.99 * ((0.00001 / ((double) D)) + (0.99999 * transprob.get(key))));
 					}// end else
 				}
 			}
