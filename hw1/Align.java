@@ -123,7 +123,7 @@ public class Align {
 			alignfile.close();
 
 			int counter = 0;
-			while (infile.hasNextLine() && counter < 40000) {
+			while (infile.hasNextLine() && counter < 99850) {
 				if ((counter % 10000) == 0)
 					System.out.print("\n" + counter / 1000);
 				else if ((counter % 1000) == 0)
