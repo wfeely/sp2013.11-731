@@ -9,10 +9,9 @@ from collections import Counter
 def meteor(hyp,ref):
 	hyp = hyp.split()
 	ref = ref.split()
-	bag1 = Counter(hyp) # turn hypothesis sentence into bag of words
-	bag2 = Counter(ref) # turn reference sentence into bag of words
-	p = len(bag1 & bag2)/float(len(hyp)) # precision
-	r = len(bag1 & bag2)/float(len(ref)) # recall
+	ngrams = list((Counter(hyp) & Counter(ref)).elements()) # mutual ngrams in hyp and ref, preserving multiples
+	p = len(ngrams)/float(len(hyp)) # precision
+	r = len(ngrams)/float(len(ref)) # recall
 	score = 0.0
 	if not ((p == 0.0) and (r == 0.0)):
 		score = (10.0*p*r)/(r+(9.0*p)) # weighted harmonic mean of precision and recall
