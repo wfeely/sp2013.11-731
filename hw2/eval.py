@@ -64,22 +64,22 @@ def get_chunks(hyp,ref):
 	ref_chunked = list('0'*len(ref))
 	hyp_chunked = list('0'*len(hyp))
 	#For every chunk size
-	for i in xrange(len(ref),0,-1):	
+	for i in xrange(len(ref),0,-1):
 		#For index j in reference
-		for j in xrange(0,len(ref)-i-1):
-			#Check if any matches are in current span			
-			if '1' in ref[j:j+i]:
+		for j in xrange(0,(len(ref)-(i-1))):
+			#Check if any matches are in current span	
+			if '1' in ref_chunked[j:(j+i)]:
 				continue
 			#For index k in hypothesis
-			for k in xrange(0,len(hyp)-i-1):
+			for k in xrange(0,(len(hyp)-(i-1))):
 				#Check if any matches are in current span
-				if '1' in hyp[k:k+i]:
+				if '1' in hyp_chunked[k:(k+i)]:
 					continue
 				#Check if the current span in ref and hyp are the same list
-				if ref[j:j+i] == hyp[k:k+i]:
+				if ref[j:(j+i)] == hyp[k:(k+i)]:
 					#Mark the current span in ref and hyp as matched
-					ref_chunked[j:j+i] = list('1'*i)					
-					hyp_chunked[k:k+i] = list('1'*i)
+					ref_chunked[j:(j+i)] = list('1'*i)					
+					hyp_chunked[k:(k+i)] = list('1'*i)
 					#Increment chunk counter						
 					c+=1
 					break
@@ -185,11 +185,11 @@ def meteor(hyp,ref,wordnet):
 	#Calculate number of chunks
 	c = get_chunks(hyp,ref)
 	#Get number of unigrams mapped
-	um = len(unigrams)	
+	um = len(unigrams)
 	#Calculate METEOR score
 	score = 0.0
 	if (c != 0.0) and (um != 0.0):
-		score = fmean * (1.0 - (0.5 * ( (c/um) ** 3 ) ) ) # METEOR metric with penalty	
+		score = fmean * (1.0 - (0.5 * ( (c/um) ** 3 ) ) ) # METEOR metric with penalty
 	return score
 
 '''Evaluation function, returns -1 if h1 is best, 1 if h2 is best, 0 if neither is best'''
@@ -207,10 +207,10 @@ def evaluate(triple,wordnet,i):
 	e_clean = re.sub('\_\S+\s',' ',e)
 	e_clean.strip()
 	#Score both hypotheses	
-	#score1 = (0.3*bleu(h1_clean,e_clean,3))+(0.7*meteor(h1,e,wordnet))
-	#score2 = (0.3*bleu(h2_clean,e_clean,3))+(0.7*meteor(h2,e,wordnet))
-	score1 = bleu(h1_clean,e_clean,3)
-	score2 = bleu(h2_clean,e_clean,3)	
+	score1 = (0.3*bleu(h1_clean,e_clean,3))+(0.7*meteor(h1,e,wordnet))
+	score2 = (0.3*bleu(h2_clean,e_clean,3))+(0.7*meteor(h2,e,wordnet))
+	#score1 = bleu(h1_clean,e_clean,3)
+	#score2 = bleu(h2_clean,e_clean,3)	
 	#score1 = meteor(h1,e,wordnet)
 	#score2 = meteor(h2,e,wordnet)
 	#Return result, indicating best hypothesis
