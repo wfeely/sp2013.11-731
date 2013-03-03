@@ -58,6 +58,33 @@ def get_ngrams(sent,n):
 		ngrams.append(buff.rstrip())
 	return ngrams
 
+'''Returns smallest number of shared contiguous "chunks" between two sentences'''
+def get_chunks(hyp,ref):
+	c = 0
+	ref_chunked = list('0'*len(ref))
+	hyp_chunked = list('0'*len(hyp))
+	#For every chunk size
+	for i in xrange(len(ref),0,-1):	
+		#For index j in reference
+		for j in xrange(0,len(ref)-i-1):
+			#Check if any matches are in current span			
+			if '1' in ref[j:j+i]:
+				continue
+			#For index k in hypothesis
+			for k in xrange(0,len(hyp)-i-1):
+				#Check if any matches are in current span
+				if '1' in hyp[k:k+i]:
+					continue
+				#Check if the current span in ref and hyp are the same list
+				if ref[j:j+i] == hyp[k:k+i]:
+					#Mark the current span in ref and hyp as matched
+					ref_chunked[j:j+i] = list('1'*i)					
+					hyp_chunked[k:k+i] = list('1'*i)
+					#Increment chunk counter						
+					c+=1
+					break
+	return c
+
 '''Converts a word+Penn POS tag combo (dog.NN) into a wordnet POS tag combo (dog.noun) for all words in a list'''
 def penn_to_wn_tags(pennlist):
 	wnlist = []
@@ -151,9 +178,18 @@ def meteor(hyp,ref,wordnet):
 	#Calculate precision and recall
 	p = len(unigrams)/float(len(hyp)) # precision
 	r = len(unigrams)/float(len(ref)) # recall
-	score = 0.0
+	#Calculate weighted harmonic mean of precision and recall	
+	fmean = 0.0
 	if not ((p == 0.0) and (r == 0.0)):
-		score = (10.0*p*r)/(r+(9.0*p)) # weighted harmonic mean of precision and recall
+		fmean = (10.0*p*r)/(r+(9.0*p))
+	#Calculate number of chunks
+	c = get_chunks(hyp,ref)
+	#Get number of unigrams mapped
+	um = len(unigrams)	
+	#Calculate METEOR score
+	score = 0.0
+	if (c != 0.0) and (um != 0.0):
+		score = fmean * (1.0 - (0.5 * ( (c/um) ** 3 ) ) ) # METEOR metric with penalty	
 	return score
 
 '''Evaluation function, returns -1 if h1 is best, 1 if h2 is best, 0 if neither is best'''
