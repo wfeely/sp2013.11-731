@@ -207,8 +207,10 @@ def evaluate(triple,wordnet,i):
 	e_clean = re.sub('\_\S+\s',' ',e)
 	e_clean.strip()
 	#Score both hypotheses	
-	score1 = (0.3*bleu(h1_clean,e_clean,3))+(0.7*meteor(h1,e,wordnet))
-	score2 = (0.3*bleu(h2_clean,e_clean,3))+(0.7*meteor(h2,e,wordnet))
+	#score1 = (0.3*bleu(h1_clean,e_clean,3))+(0.7*meteor(h1,e,wordnet))
+	#score2 = (0.3*bleu(h2_clean,e_clean,3))+(0.7*meteor(h2,e,wordnet))
+	score1 = bleu(h1_clean,e_clean,3)
+	score2 = bleu(h2_clean,e_clean,3)	
 	#score1 = meteor(h1,e,wordnet)
 	#score2 = meteor(h2,e,wordnet)
 	#Return result, indicating best hypothesis
