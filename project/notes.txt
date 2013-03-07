@@ -1,0 +1,86 @@
+Read:
+- CCB paper (Zdi et al)
+- Egyptian segmenter paper
+- Iraqi segmenter paper (Yang et al)
+- MADA paper (Habash et al)
+- HIERO paper
+- GHKM paper
+
+Project plan:
+
+Baseline:		Egyptian text --> MADA --> HIERO --> BLEU
+Initial changes:	Egyptian text --> Levantine & English pre-processing --> Egyptian Segmenter --> HIERO --> BLEU
+Stretch goal:		Egyptian text --> Egyptian Segmenter --> GHKM --> BLEU
+
+Pre-break:
+- Make this project plan (CHECK!)
+- Write project proposal (CHECK!)
+- Divide labor over break (CHECK!)
+
+Over break:
+- Read CCB paper - Serena & Wes
+- Pull out Egyptian and English data, make sentence-aligned Egyptian-English parallel corpus ("Egyptian ||| English") - Wes
+- Linguistic analysis of Egyptian & Levantine morphosyntax - Serena
+- Read MADA paper, download MADA, get familiar with usage - Serena
+- Run Egyptian text through MADA - Serena
+- Read HIERO paper, GHKM paper, look for open source toolkit - Wes
+- Do Levantine & English data pre-processing - Wes and Serena
+
+Post-break:
+- make morphological-analyzed parallel corpus
+- implement HIERO, get BLEU scores
+- Read Iraqi word segmenter paper
+- Implement Egyptian word segmenter
+- Stretch goal: Read GHKM paper, implement GHKM, get BLEU scores
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Discourse
+- user acceptability - what features matter?
+	- detect hostility
+	- all caps
+	- violent words
+	- volume of swear words
+	- volume of agreement words (yeah, agree, i think so)
+		vs disagreement words (no, not, ain't)
+- percent of racist/sexist posts versus posts against racism/sexism
+	- cross-reference list of racist users w sexist users
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
