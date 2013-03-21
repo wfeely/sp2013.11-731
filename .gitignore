@@ -9,7 +9,9 @@ src_managed/
 project/boot/
 project/plugins/project/
 project/data/
+project/project_proposal.tex
 hw2/WN
+wfeely_mandarin_presentation.pdf
 
 # Scala-IDE specific
 .scala_dependencies
