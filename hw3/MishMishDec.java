@@ -147,9 +147,10 @@ public static double getLMscore(String sentence){
 		String ngram = "";
 		//Get the next ngram from current
 		for(int j=i; j<Math.min(current.size(),i+2); j++){
-			ngram += current.get(j);
+			ngram += current.get(j)+" ";
 		}
-		
+		ngram = ngram.trim();		
+
 		//Get lm score for current ngram
 		try{	
 			Pair<Double,Double> pair = lm.get(ngram);
@@ -188,8 +189,9 @@ public static double getLMscore(String sentence){
 		j = current.size()-1; // final unigram </s>
 	}
 	for(int i=j; i<len; i++){
-		ngram += current.get(i);
+		ngram += current.get(i)+" ";
 	}
+	ngram = ngram.trim();
 	//Get lm score for last ngram
 	try{	
 		Pair<Double,Double> pair = lm.get(ngram);
