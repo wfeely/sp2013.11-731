@@ -139,40 +139,80 @@ public static double getLMscore(String sentence){
 	while(tok.hasMoreTokens())
 		words.add(tok.nextToken());
 	double score = 0.0;
+	
+	ArrayList<String> current = new ArrayList<String>();
+	current.add("<s>"); // always start with context cue <s>
 	for(int i=0; i<words.size(); i++){
-		String s;
-		if(i>=2)
-			s = words.get(i-2) + " " + words.get(i-1) + " " + words.get(i);
-		else if(i>=1)
-			s = words.get(i-1) + " " + words.get(i); 
-		else 
-			s = words.get(i);
-
-		//get trigram score
-		try{
-			Pair<Double,Double> pair = lm.get(s);
+		current.add(words.get(i)); // add next unigram to current list
+		String ngram = "";
+		//Get the next ngram from current
+		for(int j=i; j<Math.min(current.size(),i+2); j++){
+			ngram += current.get(j);
+		}
+		
+		//Get lm score for current ngram
+		try{	
+			Pair<Double,Double> pair = lm.get(ngram);
 			double gramscore;
 			if(pair!=null)
-				gramscore = pair.first();
+				score += pair.first();
 			else{
 				while(pair == null){ //backoff
-					if(s.contains(" ")){
-						s = s.substring(s.indexOf(' ')+1);
-						pair = lm.get(s);
+					if(ngram.contains(" ")){
+						ngram = ngram.substring(ngram.indexOf(' ')+1);
+						pair = lm.get(ngram);
 					}
 					else 
 						pair = new Pair<Double,Double>(0.0, 0.0);
 				}//end while backoff
-				gramscore = pair.second();
+				score += pair.second();
 			}
-			score += gramscore;
 		}
 		catch(NullPointerException npe){
-			System.out.println("NullPointerException: s = " + s + "\n" + npe.getMessage()
+			System.out.println("NullPointerException: ngram = " + ngram + "\n" + npe.getMessage()
 				+ "\nin sentence: " + sentence);
 			System.exit(1);
 		}
 	}//end for
+
+	current.add("</s>"); // always end with context-cue </s>
+	//Get last ngram
+	String ngram = "";
+	int len = current.size();
+	int j;
+	if(len > 3){
+		j = len-3; // final trigram
+	} else if(current.size() > 2){
+		j = current.size()-2; // final bigram
+	} else {
+		j = current.size()-1; // final unigram </s>
+	}
+	for(int i=j; i<len; i++){
+		ngram += current.get(i);
+	}
+	//Get lm score for last ngram
+	try{	
+		Pair<Double,Double> pair = lm.get(ngram);
+		double gramscore;
+		if(pair!=null)
+			score += pair.first();
+		else{
+			while(pair == null){ //backoff
+				if(ngram.contains(" ")){
+					ngram = ngram.substring(ngram.indexOf(' ')+1);
+					pair = lm.get(ngram);
+				}
+				else 
+					pair = new Pair<Double,Double>(0.0, 0.0);
+			}//end while backoff
+			score += pair.second();
+		}
+	}
+	catch(NullPointerException npe){
+		System.out.println("NullPointerException: ngram = " + ngram + "\n" + npe.getMessage()
+			+ "\nin sentence: " + sentence);
+		System.exit(1);
+	}
 
 	return score;
 }//end getLMscore()
