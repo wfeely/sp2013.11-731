@@ -181,12 +181,12 @@ public static double getLMscore(String sentence){
 	String ngram = "";
 	int len = current.size();
 	int j;
-	if(len > 3){
+	if(len > 2){
 		j = len-3; // final trigram
-	} else if(current.size() > 2){
+	} else if(current.size() > 1){
 		j = current.size()-2; // final bigram
 	} else {
-		j = current.size()-1; // final unigram </s>
+		j = current.size()-1; // final unigram </s>, shouldn't be possible bc the empty string will be "<s> </s>"
 	}
 	for(int i=j; i<len; i++){
 		ngram += current.get(i)+" ";
