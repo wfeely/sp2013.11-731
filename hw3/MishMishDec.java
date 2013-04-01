@@ -1,7 +1,7 @@
 /** MishMishDec.java
 * MT HW 3
 * Weston Feely & Serena Jeblee
-* Last Modified: 30 Mar 2013
+* Last Modified: 1 Apr 2013
 */
 
 import java.io.*;
@@ -241,7 +241,7 @@ public static String search(ArrayList<String> unigrams, String hyp, HashMap<Stri
 	stacks.get(0).add(nullnode);
 	
 	//int r = 1; //Reorder distance
-	int maxsize = 1000;
+	int maxsize = 499;
 
 	while(stackindex <= numstacks){
 		System.out.print("Building stack " + stackindex + " : ");
@@ -282,9 +282,16 @@ public static String search(ArrayList<String> unigrams, String hyp, HashMap<Stri
 						//make node object, set parent pointer, add to stack
 							String phrase = pair.first();
 							Node n = new Node(phrase, tmscore+node.tmprob, node);	//add new node, update prob
+							//Set coverage vector				
 							n.coverage = n.parent.coverage();
 							for(int c=i; c<Math.min(i+ngramorder,numstacks); c++)
 								n.coverage[c] = 1;
+							//Set end of last spanish phrase translated
+							if(phrase.contains(" "))
+								n.lastsp = phrase.substring(phrase.lastIndexOf(' '));
+							else
+								n.lastsp = phrase;
+							//Set English translation history
 							n.history = n.parent.history();
 							StringTokenizer phrasetok = new StringTokenizer(phrase);
 							while(phrasetok.hasMoreTokens()) //update history
@@ -321,8 +328,8 @@ public static String search(ArrayList<String> unigrams, String hyp, HashMap<Stri
 										}
 										//System.out.println("\t\t\tcomparing " + hist + " " + ncov);
 										//System.out.println("\t\t\t and " + stackhist + " " + sncov);
-										if(stackhist.equals(hist) || ncov.equals(sncov)){ //duplicate found! 
-											// || ncov.equals(sncov)
+										//Recombination: check if any set of nodes has the same (1) last two English words translated, (2) coverage vectors, (3) last Spanish word translated; then keep only the best node in stack
+										if(stackhist.equals(hist) && ncov.equals(sncov) && stacknode.lastsp.equals(n.lastsp)){
 											//System.out.println("\t\t\tduplicate!");
 											dup = true;
 											if((stacknode.score) < (n.score)){

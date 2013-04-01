@@ -1,6 +1,6 @@
 /** Node class for GetDeps
 * @author sjeblee@cs.cmu.edu
-* Last Modified: 6 March 2013
+* Last Modified: 30 March 2013
 */
 
 import java.util.ArrayList;
@@ -11,12 +11,15 @@ public class Node{
 public String name;
 public ArrayList<String> history;
 public Node parent;
-public double prob;
+public double tmprob;
+public double lmprob;
+public double score;
 public int[] coverage;
+public String lastsp;
 
-public Node(String n, double score, Node p){
+public Node(String n, double tm, Node p){
 	name = n;
-	prob = score;
+	tmprob = tm;
 	parent = p;
 }
 
@@ -35,6 +38,13 @@ public int[] coverage(){
 	return arr;
 }
 
+public String coveragestring(){
+	String h = "";
+	for(int i=0; i<coverage.length; i++)
+		h += coverage[i];
+	return h.trim();
+}
+
 public String historystring(){
 	String h = "";
 	for(String s : this.history)
@@ -43,10 +53,11 @@ public String historystring(){
 }
 
 public String toString(){
-	String s = name + " " + prob + " ";
+	String s = "**********************\n" + this.historystring() + "\n" + score + "\n";
 	for(int i=0; i<coverage.length; i++){
 		s += coverage[i];
 	}
+	s += "\n**********************";
 	return s;
 }
 
