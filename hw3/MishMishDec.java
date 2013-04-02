@@ -1,7 +1,7 @@
 /** MishMishDec.java
  * MT HW 3
  * Weston Feely & Serena Jeblee
- * Last Modified: 1 Apr 2013
+ * Last Modified: 2 Apr 2013
  */
 
 import java.io.*;
@@ -13,12 +13,12 @@ public class MishMishDec {
 	public static HashMap<String, ArrayList<Pair<String, Double>>> tm;
 	public static HashMap<String, Double> fctable;
 	public static int r;
+	public static int hist_size;
 
 	public static void main(String[] args) {
 
 		if (args.length < 4) {
-			System.out
-					.println("Usage: java MishMishDec data languagemodel translationmodel reorder-distance");
+			System.out.println("Usage: java MishMishDec data/input data/lm data/tm reorder_distance histogram_size");
 			System.exit(1);
 		}
 
@@ -28,22 +28,24 @@ public class MishMishDec {
 		String lmfile = args[1];
 		String tmfile = args[2];
 		r = Integer.parseInt(args[3]);
+		hist_size = Integer.parseInt(args[4]);
 
 		try {
 
+			System.out.println("Reorder Distance=" + r);
+			System.out.println("Histogram Size=" + hist_size);
 			lm = readLM(lmfile);
-			System.out.println("LM size: " + lm.size());
+			//System.out.println("LM size: " + lm.size());
 			tm = readTM(tmfile);
 
 			// Read in heuristic hypotheses
 			Scanner hypin = new Scanner(new FileReader("science.txt"));
 			Scanner infile = new Scanner(new FileReader(datafile));
-			FileWriter outfile = new FileWriter("output" + r + ".txt");
+			FileWriter outfile = new FileWriter("output_r" + r + "_h" + hist_size + ".txt");
 			int counter = 0;
 			while (infile.hasNextLine()) {
 				fctable = new HashMap<String, Double>();
-				Scanner sentfile = new Scanner(new FileReader("fc/sent"
-						+ counter + ".txt"));
+				Scanner sentfile = new Scanner(new FileReader("fc/sent" + counter + ".txt"));
 				while (sentfile.hasNextLine()) {
 					StringTokenizer senttok = new StringTokenizer(
 							sentfile.nextLine(), "\t");
@@ -72,8 +74,7 @@ public class MishMishDec {
 				time = endtime - starttime;
 				timemins = (((double) time) / 1000) / 60;
 				System.out.println("Cumulative time: " + timemins + " mins");
-				System.out.println("Estimated time remaining: "
-						+ ((timemins / (double) counter) * (54 - counter)));
+				System.out.println("Estimated time remaining: " + ((timemins / (double) counter) * (54 - counter)));
 			}// end while
 
 			infile.close();
@@ -175,6 +176,8 @@ public class MishMishDec {
 	}// end getsubset
 
 	public static double getLMscore(String sentence) {
+		//Add context cues
+		sentence = "<s> "+sentence+" </s>";
 		ArrayList<String> words = new ArrayList<String>();
 		StringTokenizer tok = new StringTokenizer(sentence);
 		while (tok.hasMoreTokens())
@@ -221,17 +224,50 @@ public class MishMishDec {
 		}// end else
 	}// end ngramscore
 
-	/**
-	 * Done: No matter what is added, the worse path can be dropped if the last
-	 * two English words are the same OR if the spanish coverage vectors are the
-	 * same TODO: Should we be comparing the heuristic hypothesis based on tm
-	 * score or lm score? current: tm score
-	 **/
+	public static boolean check_coverage(Node n, ArrayList<String> unigrams, int stackindex, HashMap<String, ArrayList<Pair<String, Double>>> searchspace){
+		//Check for zeros in reorder-window
+		if(n.coveragestring().substring(0,Math.max(stackindex - r, 0)).contains("0")){
+			return false;
+		}
+
+		int[] cov = n.coverage;		
+		int i=0;
+		String indices = "";
+
+		while(i < cov.length){
+			//Get next contiguous string of zeros
+			while((i < cov.length) && (cov[i]==0)){
+				indices += i + "";
+				i++;
+			}//end while i < cov.length && cov[i]==0
+			if((indices != "") && (indices.length()<=3)){
+				//Build up phrase for this uncovered unigram, bigram, or trigram
+				String phrase = "";
+				for(int s=0; s<indices.length(); s++){
+					int index = Integer.parseInt(Character.toString(indices.charAt(s)));
+					phrase += unigrams.get(index) + " ";
+				}
+				phrase = phrase.trim();
+				/* Debugging: Print all translations for our phrase				
+				 * System.out.println("Translations for "+ phrase +":");
+				 * for(Pair<String,Double> trans : searchspace.get(phrase))
+					 System.out.println(trans.first());
+				 */
+				//Check to see if this uncovered phrase has a translation
+				if(searchspace.get(phrase) == null)
+					return false;
+			}
+			i++;
+			indices = "";
+		}//end while i < cov.length
+	
+		return true;
+
+	}//end check_coverage
 
 	// Search for best translation; input is unigrams (list of words) from
 	// source sentence and searchspace dictionary
-	public static String search(ArrayList<String> unigrams, String hyp,
-			HashMap<String, ArrayList<Pair<String, Double>>> searchspace) {
+	public static String search(ArrayList<String> unigrams, String hyp, HashMap<String, ArrayList<Pair<String, Double>>> searchspace) {
 		// Initial stack for unigrams
 		ArrayList<Node> init_stack = new ArrayList<Node>();
 		int stackindex = 1;
@@ -239,13 +275,11 @@ public class MishMishDec {
 		System.out.println("numstacks: " + numstacks);
 
 		// get heuristic hypothesis
-		double hypscore = Double
-				.parseDouble(hyp.substring(0, hyp.indexOf(' ')));
-		hyp = hyp.substring(hyp.indexOf(' '));
+		double hypscore = Double.parseDouble(hyp.substring(0, hyp.indexOf(' ')));
+		hyp = hyp.substring(hyp.indexOf(' ')+1);
 		double hyplmscore = getLMscore(hyp);
 		double hyptotalscore = hypscore + hyplmscore;
-		System.out.println("hyp = " + hyp + "\ntmscore: " + hypscore
-				+ "\nlmscore: " + hyplmscore);
+		System.out.println("hyp = " + hyp + "\ntmscore: " + hypscore + "\nlmscore: " + hyplmscore);
 		System.out.println("hypscore = " + hyptotalscore);
 
 		ArrayList<ArrayList<Node>> stacks = new ArrayList<ArrayList<Node>>();
@@ -259,14 +293,13 @@ public class MishMishDec {
 		for (int i = 0; i < numstacks; i++)
 			nullnode.coverage[i] = 0;
 		nullnode.history = new ArrayList<String>();
-		nullnode.history.add("<s>");
 		nullnode.tmprob = 0.0;
 		nullnode.lmprob = 0.0;
 		nullnode.score = 0.0;
 		stacks.get(0).add(nullnode);
 
 		// int r = 1; //Reorder distance
-		int maxsize = 999;
+		int maxsize = hist_size;
 
 		while (stackindex <= numstacks) {
 			System.out.print("Building stack " + stackindex + " : ");
@@ -323,11 +356,8 @@ public class MishMishDec {
 									// make node object, set parent pointer, add
 									// to stack
 									String phrase = pair.first();
-									Node n = new Node(phrase, tmscore
-											+ node.tmprob, node); // add new
-																	// node,
-																	// update
-																	// prob
+									//Add new node update prob
+									Node n = new Node(phrase, tmscore+ node.tmprob, node);
 									// Set coverage vector
 									n.coverage = n.parent.coverage();
 									for (int c = i; c < Math.min(
@@ -335,32 +365,23 @@ public class MishMishDec {
 										n.coverage[c] = 1;
 									// Set end of last spanish phrase translated
 									if (phrase.contains(" "))
-										n.lastsp = phrase.substring(phrase
-												.lastIndexOf(' '));
+										n.lastsp = phrase.substring(phrase.lastIndexOf(' '));
 									else
 										n.lastsp = phrase;
 									// Set English translation history
 									n.history = n.parent.history();
-									StringTokenizer phrasetok = new StringTokenizer(
-											phrase);
+									StringTokenizer phrasetok = new StringTokenizer(phrase);
 									while (phrasetok.hasMoreTokens())
 										// update history
 										n.history.add(phrasetok.nextToken());
 
 									// compute language model score
-									double lmscore = getLMscore(n
-											.historystring());
+									double lmscore = getLMscore(n.historystring());
 									n.lmprob = lmscore;
 
 									// set score = lmprob + tmprob + future cost
-									if ((!n.coveragestring()
-											.substring(0,
-													Math.max(stackindex - r, 0))
-											.contains("0"))) {
-										n.score = n.lmprob
-												+ n.tmprob
-												+ fctable.get(n
-														.coveragestring());
+									if (check_coverage(n,unigrams,stackindex,searchspace)) {
+										n.score = n.lmprob + n.tmprob + fctable.get(n.coveragestring());
 
 										// System.out.println(n);
 
@@ -368,16 +389,13 @@ public class MishMishDec {
 										// System.out.println("node score greater than hypscore");
 
 										// check stack for duplicates
-										if ((stackindex > 1)
-												&& (n.history.size() >= 2)) {
+										if ((stackindex > 1) && (n.history.size() >= 2)) {
 											int removeindex = -1;
 											boolean dup = false;
-											for (Node stacknode : stacks
-													.get(stackindex)) {
+											for (Node stacknode : stacks.get(stackindex)) {
 												if (stacknode.history.size() >= 2) {
 
-													String stackhist = stacknode.history
-															.get(stacknode.history
+													String stackhist = stacknode.history.get(stacknode.history
 																	.size() - 2)
 															+ " "
 															+ stacknode.history
@@ -434,21 +452,9 @@ public class MishMishDec {
 													// stacknode.history.size()
 													// >=2
 											}// end for stacknode in stack
-											if (dup
-													&& (removeindex >= 0)
-													&& (!n.coveragestring()
-															.substring(
-																	0,
-																	Math.max(
-																			stackindex
-																					- r,
-																			0))
-															.contains("0"))) {
-												Node rn = stacks
-														.get(stackindex).get(
-																removeindex);
-												stacks.get(stackindex).remove(
-														removeindex);
+											if (dup && (removeindex >= 0)) {
+												Node rn = stacks.get(stackindex).get(removeindex);
+												stacks.get(stackindex).remove(removeindex);
 												// System.out.println("\t\t\tremoved old node");
 
 												stacks.get(stackindex).add(n);
@@ -456,8 +462,7 @@ public class MishMishDec {
 													worstnode = n;
 												if (rn == worstnode) {
 													worstnode = initialworst;
-													for (Node sn : stacks
-															.get(stackindex)) { // reset
+													for (Node sn : stacks.get(stackindex)) { // reset
 																				// worstnode
 														if (sn.score < worstnode.score)
 															worstnode = sn;
@@ -465,55 +470,26 @@ public class MishMishDec {
 												}
 												// System.out.println("\t\t\tadded new node");
 											} else if (!dup) {
-												if (stacks.get(stackindex)
-														.size() > maxsize) {
-													if ((n.score > worstnode.score)
-															&& (!n.coveragestring()
-																	.substring(
-																			0,
-																			Math.max(
-																					stackindex
-																							- r,
-																					0))
-																	.contains(
-																			"0"))) { // only
-																						// add
-																						// it
-																						// if
-																						// it's
-																						// not
-																						// worse
-														stacks.get(stackindex)
-																.add(n);
-														boolean bool = stacks
-																.get(stackindex)
-																.remove(worstnode); // drop
-																					// worst
+												if (stacks.get(stackindex).size() > maxsize) {
+													//Only delete if its not worse
+													if (n.score > worstnode.score) {
+														stacks.get(stackindex).add(n);
+														//Drop worst
+														boolean bool = stacks.get(stackindex).remove(worstnode);
 														if (!bool)
-															System.out
-																	.println("\tWARNING: worstnode not removed!");
+															System.out.println("\tWARNING: worstnode not removed!");
 														worstnode = initialworst;
-														for (Node sn : stacks
-																.get(stackindex)) { // reset
-																					// worstnode
+														//Reset worstnode
+														for (Node sn : stacks.get(stackindex)) {
 															if (sn.score < worstnode.score)
 																worstnode = sn;
 														}
 													}// end if n.score >
 														// worstnode.score
 												} else {
-													if (!n.coveragestring()
-															.substring(
-																	0,
-																	Math.max(
-																			stackindex
-																					- r,
-																			0))
-															.contains("0"))
-														stacks.get(stackindex)
-																.add(n);
-													if (n.score < worstnode.score) // reset
-																					// worstnode
+													stacks.get(stackindex).add(n);
+													//Reset worstnode
+													if (n.score < worstnode.score)
 														worstnode = n;
 												}
 												// System.out.println("\t\t\tadded new node");
@@ -522,13 +498,7 @@ public class MishMishDec {
 											// one, don't add new, nothing to do
 										}// end if stackindex > 1
 										else {
-											if (!n.coveragestring()
-													.substring(
-															0,
-															Math.max(stackindex
-																	- r, 0))
-													.contains("0"))
-												stacks.get(stackindex).add(n);
+											stacks.get(stackindex).add(n);
 										}
 									}// end if coverage vector acceptable
 									// }//end if score < hypscore
@@ -539,10 +509,12 @@ public class MishMishDec {
 				}// end if stackindex+ngramorder <= numstacks
 			}// end for s
 
-			System.out.println("Added " + stacks.get(stackindex).size()
-					+ " nodes");
-			// for(Node n : stacks.get(stackindex))
-			// System.out.println(n);
+			System.out.println("Added " + stacks.get(stackindex).size() + " nodes");
+			/* Debugging: Print all nodes in the current stack
+			 * for(Node n : stacks.get(stackindex))
+			 * 	System.out.println(n);
+			 */
+			//Increment stack index, move to next stack
 			stackindex++;
 		}// end while stackindex <= numstacks
 
@@ -550,15 +522,13 @@ public class MishMishDec {
 		Node bestnode = null;
 		// System.out.println("hypscore: " + hypscore);
 		for (Node n : stacks.get(numstacks)) {
-			n.history.add("</s>");
 			System.out.println(n);
 			String hist = n.historystring();
 			n.lmprob = getLMscore(hist);
 			n.score = n.lmprob + n.tmprob;
 			boolean full = true;
-			for (int c = 0; c < n.coverage.length; c++) { // check to make sure
-															// translation
-															// covers all words
+			//Check to make sure translation covers all words
+			for (int c = 0; c < n.coverage.length; c++) {
 				if (n.coverage[c] == 0) {
 					full = false;
 					break;

@@ -1,4 +1,4 @@
 #!/bin/bash
 
-java -Xms2300m -Xmx2300m MishMishDec data/input data/lm data/tm 2
+java -Xms2300m -Xmx2300m MishMishDec data/input data/lm data/tm 1 499
 
