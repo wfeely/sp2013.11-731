@@ -266,7 +266,7 @@ public class MishMishDec {
 		stacks.get(0).add(nullnode);
 
 		// int r = 1; //Reorder distance
-		int maxsize = 499;
+		int maxsize = 999;
 
 		while (stackindex <= numstacks) {
 			System.out.print("Building stack " + stackindex + " : ");
