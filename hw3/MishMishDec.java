@@ -11,6 +11,7 @@ public class MishMishDec{
 
 public static HashMap<String, Pair<Double, Double>> lm;
 public static HashMap<String, ArrayList<Pair<String, Double>>> tm;
+public static HashMap<String, Double> fctable;
 public static int r;
 
 public static void main(String[] args){
@@ -39,6 +40,16 @@ public static void main(String[] args){
 		FileWriter outfile = new FileWriter("output" + r + ".txt");
 		int counter = 0;
 		while(infile.hasNextLine()){
+			fctable = new HashMap<String, Double>();
+			Scanner sentfile = new Scanner(new FileReader("fc/sent" + counter + ".txt"));
+			while(sentfile.hasNextLine()){
+				StringTokenizer senttok = new StringTokenizer(sentfile.nextLine(), "\t");
+				String cov = senttok.nextToken();
+				double fc = Double.parseDouble(senttok.nextToken());
+				fctable.put(cov, fc);
+			}
+			sentfile.close();
+			
 			long senttime = System.currentTimeMillis();
 			String line = infile.nextLine();
 			System.out.println(counter + ". Decoding: " + line);
@@ -297,14 +308,17 @@ public static String search(ArrayList<String> unigrams, String hyp, HashMap<Stri
 							while(phrasetok.hasMoreTokens()) //update history
 								n.history.add(phrasetok.nextToken());
 
+							//compute language model score
 							double lmscore = getLMscore(n.historystring());
 							n.lmprob = lmscore;
-							n.score = n.lmprob + n.tmprob;
-							//System.out.println("total node score: " + totalscore);
+
+							//set score = lmprob + tmprob + future cost
+							if((!n.coveragestring().substring(0,Math.max(stackindex-r, 0)).contains("0"))){
+								n.score = n.lmprob + n.tmprob + fctable.get(n.coveragestring());
+				
 							//System.out.println(n);
 
 						//if(n.score >= hyptotalscore){
-						
 							//System.out.println("node score greater than hypscore");
 							
 							//check stack for duplicates
@@ -385,6 +399,7 @@ public static String search(ArrayList<String> unigrams, String hyp, HashMap<Stri
 								if(!n.coveragestring().substring(0,Math.max(stackindex-r, 0)).contains("0"))
 									stacks.get(stackindex).add(n);
 							}
+							}//end if coverage vector acceptable
 						//}//end if score < hypscore
 					}//end for pair in list
 				}//end if node.coverage
