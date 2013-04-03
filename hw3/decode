@@ -69,42 +69,59 @@ for f in input_sents:
 	    #Get continguous phrases from i:j for all j
             for j in xrange(i+1,len(f)+1):
                 if f[i:j] in tm:
-                    for phrase in tm[f[i:j]]:
-                        logprob = h.logprob + phrase.logprob
+                    for ijphrase in tm[f[i:j]]:
+                        logprob = h.logprob + ijphrase.logprob
                         lm_state = h.lm_state
-                        for word in phrase.english.split():
+                        for word in ijphrase.english.split():
                             (lm_state, word_logprob) = lm.score(lm_state, word)
                             logprob += word_logprob
                         logprob += lm.end(lm_state) if j == len(f) else 0.0
-                        new_hypothesis = hypothesis(logprob, lm_state, h, phrase)
+                        ijnode = hypothesis(logprob, lm_state, h, ijphrase)
                         if lm_state not in stacks[j] or stacks[j][lm_state].logprob < logprob: # second case is recombination
-                            stacks[j][lm_state] = new_hypothesis
+                            stacks[j][lm_state] = ijnode
 			else:
 				continue
 			#Allow for local reordering
 			for k in xrange(j+1,len(f)+1):
-				if f[j:k] in tm:					
-					for reorder_phrase in tm[f[j:k]]:
-						lp1 = h.logprob + reorder_phrase.logprob
+				if f[j:k] in tm:
+					for jkphrase in tm[f[j:k]]:
+						lp1 = h.logprob + jkphrase.logprob
 						lms1 = tuple(h.lm_state)
-						for w1 in reorder_phrase.english.split():
+						for w1 in jkphrase.english.split():
 						    (lms1, wlp1) = lm.score(lms1, w1)
 						    lp1 += wlp1
 						lp1 += lm.end(lms1) if k == len(f) else 0.0
-						reorder_parent = hypothesis(lp1, lms1, h, reorder_phrase)
-						#if lms1 not in stacks[k] or stacks[k][lms1].logprob < lp1:
-						#    stacks[k][lms1] = reorder_parent
-						#else:
-						#	continue
-						lp2 = reorder_parent.logprob + phrase.logprob
-						lms2 = tuple(reorder_parent.lm_state)
-						for w2 in phrase.english.split():
+						jknode = hypothesis(lp1, lms1, h, jkphrase)
+						lp2 = jknode.logprob + ijphrase.logprob
+						lms2 = tuple(jknode.lm_state)
+						for w2 in ijphrase.english.split():
 						    (lms2, wlp2) = lm.score(lms2, w2)
 						    lp2 += wlp2
 						lp2 += lm.end(lms2) if j == len(f) else 0.0
-						new_hypothesis_2 = hypothesis(lp2, lms2, reorder_parent, phrase)
+						iknode = hypothesis(lp2, lms2, jknode, ijphrase)
 						if lms2 not in stacks[k] or stacks[k][lms2].logprob < lp2:
-							stacks[k][lms2] = new_hypothesis_2
+                            				stacks[k][lms2] = iknode
+						else:
+							continue
+						for l in xrange(k+1,len(f)+1):
+							if f[k:l] in tm:
+								for klphrase in tm[f[k:l]]:
+									lp3 = jknode.logprob + klphrase.logprob
+									lms3 = tuple(jknode.lm_state)
+									for w3 in klphrase.english.split():
+									    (lms3, wlp3) = lm.score(lms3, w3)
+									    lp3 += wlp3
+									lp3 += lm.end(lms3) if l == len(f) else 0.0
+									klnode = hypothesis(lp3, lms3, jknode, klphrase)
+									lp4 = klnode.logprob + ijphrase.logprob
+									lms4 = tuple(klnode.lm_state)
+									for w4 in ijphrase.english.split():
+									    (lms4, wlp4) = lm.score(lms4, w4)
+									    lp4 += wlp4
+									lp4 += lm.end(lms4) if j == len(f) else 0.0
+									ilnode = hypothesis(lp4, lms4, klnode, ijphrase)
+									if lms4 not in stacks[l] or stacks[l][lms4].logprob < lp4:
+										stacks[l][lms4] = ilnode
 
     # find best translation by looking at the best scoring hypothesis
     # on the last stack
