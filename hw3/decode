@@ -1,11 +1,12 @@
 #!/usr/bin/env python
+#Modified by: Weston Feely & Serena Jeblee
 import argparse
 import sys
 import models
 import heapq
 from collections import namedtuple
 
-parser = argparse.ArgumentParser(description='Simple phrase based decoder.')
+parser = argparse.ArgumentParser(description='Phrase based decoder with local (bigram) reordering.')
 parser.add_argument('-i', '--input', dest='input', default='data/input', help='File containing sentences to translate (default=data/input)')
 parser.add_argument('-t', '--translation-model', dest='tm', default='data/tm', help='File containing translation model (default=data/tm)')
 parser.add_argument('-s', '--stack-size', dest='s', default=1, type=int, help='Maximum stack size (default=1)')
@@ -35,6 +36,37 @@ for f in input_sents:
     for i, stack in enumerate(stacks[:-1]):
         # extend the top s hypotheses in the current stack
         for h in heapq.nlargest(opts.s, stack.itervalues(), key=lambda h: h.logprob): # prune
+	    '''
+	    #Allow for local reordering of 1
+            if i+1 < len(f):
+		#Check if current and next Spanish unigram is in TM
+		b = tuple([f[i+1]])
+		a = tuple([f[i]])
+		if (b in tm) and (a in tm):
+			#Generate all phrase translations for these two Spanish unigrams
+			phrases_iplusone = [phrase for phrase in tm[b]]
+			phrases_i = [phrase for phrase in tm[a]]
+			combos = []
+			#Get Cartesian product of both phrase sets
+			for phrase1 in phrases_iplusone:
+				for phrase2 in phrases_i:
+					my_en = phrase1.english+' '+phrase2.english
+					my_lp = phrase1.logprob+phrase2.logprob
+					my_phrase = models.phrase(my_en, my_lp)
+					combos.append(my_phrase)
+			#Loop through combos and make hypothesis for each combined phrase
+			for phrase in combos:
+		                logprob = h.logprob + phrase.logprob
+		                lm_state = h.lm_state
+		                for word in phrase.english.split():
+		                    (lm_state, word_logprob) = lm.score(lm_state, word)
+		                    logprob += word_logprob
+		                logprob += lm.end(lm_state) if i+1 == len(f) else 0.0
+		                new_hypothesis = hypothesis(logprob, lm_state, h, phrase)
+		                if lm_state not in stacks[i+1] or stacks[i+1][lm_state].logprob < logprob: # second case is recombination
+		                    stacks[i+1][lm_state] = new_hypothesis
+	    '''
+	    #Get continguous phrases from i:j for all j
             for j in xrange(i+1,len(f)+1):
                 if f[i:j] in tm:
                     for phrase in tm[f[i:j]]:
@@ -46,7 +78,33 @@ for f in input_sents:
                         logprob += lm.end(lm_state) if j == len(f) else 0.0
                         new_hypothesis = hypothesis(logprob, lm_state, h, phrase)
                         if lm_state not in stacks[j] or stacks[j][lm_state].logprob < logprob: # second case is recombination
-                            stacks[j][lm_state] = new_hypothesis 
+                            stacks[j][lm_state] = new_hypothesis
+			else:
+				continue
+			#Allow for local reordering
+			for k in xrange(j+1,len(f)+1):
+				if f[j:k] in tm:					
+					for reorder_phrase in tm[f[j:k]]:
+						lp1 = h.logprob + reorder_phrase.logprob
+						lms1 = tuple(h.lm_state)
+						for w1 in reorder_phrase.english.split():
+						    (lms1, wlp1) = lm.score(lms1, w1)
+						    lp1 += wlp1
+						lp1 += lm.end(lms1) if k == len(f) else 0.0
+						reorder_parent = hypothesis(lp1, lms1, h, reorder_phrase)
+						#if lms1 not in stacks[k] or stacks[k][lms1].logprob < lp1:
+						#    stacks[k][lms1] = reorder_parent
+						#else:
+						#	continue
+						lp2 = reorder_parent.logprob + phrase.logprob
+						lms2 = tuple(reorder_parent.lm_state)
+						for w2 in phrase.english.split():
+						    (lms2, wlp2) = lm.score(lms2, w2)
+						    lp2 += wlp2
+						lp2 += lm.end(lms2) if j == len(f) else 0.0
+						new_hypothesis_2 = hypothesis(lp2, lms2, reorder_parent, phrase)
+						if lms2 not in stacks[k] or stacks[k][lms2].logprob < lp2:
+							stacks[k][lms2] = new_hypothesis_2
 
     # find best translation by looking at the best scoring hypothesis
     # on the last stack
