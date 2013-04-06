@@ -1,31 +1,93 @@
 #!/usr/bin/env python
-import optparse
-import sys
+#Weston Feely & Serena Jeblee
+import optparse, sys, math, random
+import numpy as np
 
 optparser = optparse.OptionParser()
 optparser.add_option("-k", "--kbest-list", dest="input", default="data/test.100best", help="100-best translation lists")
 optparser.add_option("-l", "--lm", dest="lm", default=-1.0, type="float", help="Language model weight")
 optparser.add_option("-t", "--tm1", dest="tm1", default=-0.5, type="float", help="Translation model p(e|f) weight")
 optparser.add_option("-s", "--tm2", dest="tm2", default=-0.5, type="float", help="Lexical translation model p_lex(f|e) weight")
+optparser.add_option("-b", "--b", dest="b", default=0, type="int", help="Run first (0) or second (1) half of program")
 (opts, _) = optparser.parse_args()
-weights = {'p(e)'       : float(opts.lm) ,
-           'p(e|f)'     : float(opts.tm1),
-           'p_lex(f|e)' : float(opts.tm2)}
 
-all_hyps = [pair.split(' ||| ') for pair in open(opts.input)]
-num_sents = len(all_hyps) / 100
-for s in xrange(0, num_sents):
-  hyps_for_one_sent = all_hyps[s * 100:s * 100 + 100]
-  (best_score, best) = (-1e300, '')
-  for (num, hyp, feats) in hyps_for_one_sent:
-    score = 0.0
-    for feat in feats.split(' '):
-      (k, v) = feat.split('=')
-      score += weights[k] * float(v)
-    if score > best_score:
-      (best_score, best) = (score, hyp)
-  try: 
-    sys.stdout.write("%s\n" % best)
-  except (Exception):
-    sys.exit(1)
+#Weight vector
+w = np.array([0.0,float(opts.lm),float(opts.tm1),float(opts.tm2)])
 
+#Cost function
+#Returns a feature vector of form: (0 or 1,f1,f2,f3,...)
+def cost(hyp1,hyp2):
+	(num1, sent1, feats1) = hyp1
+	(num2, sent2, feats2) = hyp2
+	f1 = np.array([float(v.split('=')[1]) for v in feats1.split(' ')])
+	f2 = np.array([float(v.split('=')[1]) for v in feats2.split(' ')])
+	#Return training instance as difference of two feature vectors	
+	if sum(f1) > sum(f2):
+		#Hyp1 is better
+		return np.insert((f1-f2),0,0)
+	else:
+		#Hyp2 is better
+		return np.insert((f1-f2),0,1)
+
+#Prediction function
+#Returns 0 (if hyp1 is better) or 1 (if hyp2 is better) for a given pair of hypotheses
+def predict(hyp1,hyp2):
+	(num1, sent1, feats1) = hyp1
+	(num2, sent2, feats2) = hyp2
+	#Get feature vectors from hypotheses
+	f1 = np.array([float(v.split('=')[1]) for v in feats1.split(' ')])
+	f2 = np.array([float(v.split('=')[1]) for v in feats2.split(' ')])
+	#Get difference vector for these two hyps	
+	diff_vector = np.insert((f1-f2),0,0)
+	#Calculate sigmoid function
+	t = w[0]+sum(diff_vector[1:]*w)
+	sig = 1.0 / (1.0 + e**(-t))
+	#Predict classification
+	c = 0
+	if log(sig,2) > log(1-sig,2):
+		c = 1
+	return c
+
+#Generate training instances
+if opts.b == 0:
+	#Pull in hypotheses from file
+	all_hyps = [pair.split(' ||| ') for pair in open(opts.input)]
+	num_sents = len(all_hyps) / 100
+	#Loop through hypotheses
+	for s in xrange(0, num_sents):
+		#Get K-best list for this hypothesis
+		hyps_for_one_sent = all_hyps[s * 100:s * 100 + 100]
+		random.seed()
+		#Pick two random pairs, generate a training instance, 100 times
+		for i in xrange(0,99):
+			hyp1 = hyps_for_one_sent[random.randint(0,99)]
+			hyp2 = hyps_for_one_sent[random.randint(0,99)]
+			instance = cost(hyp1,hyp2)
+			try:
+				#Write training instance to stdout
+				sys.stdout.write("%s\n" % str(instance))
+			except (Exception):
+				sys.exit(1)
+#Rerank using weight vectors from file
+else:
+	#Read weight vectors from file
+	w_string = open('optimal_weights.txt').readlines()
+	w = np.array([float(num) for num in w_string.split()])	
+	#Pull in hypotheses from file
+	all_hyps = [pair.split(' ||| ') for pair in open(opts.input)]
+	num_sents = len(all_hyps) / 100
+	#Loop through hypotheses
+	for s in xrange(0,num_sents):
+		hyps_for_one_sent = all_hyps[s * 100:s * 100 + 100]
+		#Get best score and hyp from K-best list
+		best_hyp = hyps_for_one_sent[0]
+		for i in xrange(0,99):
+			c = predict(best_hyp, hyps_for_one_sent[i])
+			if c == 1:
+				best_hyp = hyps_for_one_sent[i]
+		best = best_hyp[1]
+		try:
+			#Write best hypothesis to stdout
+			sys.stdout.write("%s\n" % best)
+		except (Exception):
+			sys.exit(1)
