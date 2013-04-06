@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 #Weston Feely & Serena Jeblee
 import optparse, sys, math, random
 import numpy as np
@@ -9,10 +10,11 @@ optparser.add_option("-l", "--lm", dest="lm", default=-1.0, type="float", help="
 optparser.add_option("-t", "--tm1", dest="tm1", default=-0.5, type="float", help="Translation model p(e|f) weight")
 optparser.add_option("-s", "--tm2", dest="tm2", default=-0.5, type="float", help="Lexical translation model p_lex(f|e) weight")
 optparser.add_option("-b", "--b", dest="b", default=0, type="int", help="Run first (0) or second (1) half of program")
+optparser.add_option("-x", "--x", dest="x", default=100, type="int", help="Sample x number of pairs")
 (opts, _) = optparser.parse_args()
 
 #Weight vector
-w = np.array([0.,float(opts.lm),float(opts.tm1),float(opts.tm2)])
+w = np.array([0.,float(opts.lm),float(opts.tm1),float(opts.tm2),0.5,0.])
 
 #Cost function
 #Returns a feature vector of form: (0 or 1,f1,f2,f3,...)
@@ -44,9 +46,19 @@ def predict(hyp1,hyp2):
 	sig = 1. / (1. + math.e**(-t))
 	#Predict classification
 	c = 0
-	if math.log(sig,2) > math.log(1-sig,2):
+	if math.log(sig,2) < math.log(1-sig,2):
 		c = 1
 	return c
+
+#Get number of untranslated words in a hypothesis
+def get_untrans_words(hyp):
+	num_rus = 0
+	hyp_string = hyp[1]
+	cyrillic = set(list('ёъяшертыуиопющэасдфгчйкльжзхцвбнмЁЪЯШЕРТЫУИОПЮЩЭАСДФГЧЙКЛЬЖЗХЦВБНМ'))
+	for word in hyp_string.split():
+		if set(list(word)) & cyrillic:
+			num_rus += 1	
+	return num_rus
 
 #Generate training instances
 if opts.b == 0:
@@ -55,13 +67,24 @@ if opts.b == 0:
 	num_sents = len(all_hyps) / 100
 	#Loop through hypotheses
 	for s in xrange(0, num_sents):
+		sys.stderr.write("Creating training instances for hyp#"+str(s)+"\n")
 		#Get K-best list for this hypothesis
 		hyps_for_one_sent = all_hyps[s * 100:s * 100 + 100]
-		random.seed()
-		#Pick two random pairs, generate a training instance, 100 times
-		for i in xrange(0,100):
-			hyp1 = hyps_for_one_sent[random.randint(0,99)]
-			hyp2 = hyps_for_one_sent[random.randint(0,99)]
+		random.seed()		
+		#Pick two random pairs, generate a training instance, x times
+		for i in xrange(0,opts.x):
+			hyp1 = list(hyps_for_one_sent[random.randint(0,99)])
+			hyp2 = list(hyps_for_one_sent[random.randint(0,99)])
+			#Add features to hypotheses (length of sentence, number of untranslated Russian words)
+			hyp1[2] = hyp1[2].strip()
+			hyp2[2] = hyp2[2].strip()
+			hyp1[2] += " len="+str(len(hyp1[1].split()))
+			hyp2[2] += " len="+str(len(hyp2[1].split()))
+			num_rus1 = get_untrans_words(hyp1)
+			num_rus2 = get_untrans_words(hyp2)
+			hyp1[2] += " untrans="+str(num_rus1)
+			hyp2[2] += " untrans="+str(num_rus2)
+			#Generate training instance
 			instance = cost(hyp1,hyp2)
 			try:
 				#Write training instance to stdout
@@ -78,14 +101,27 @@ else:
 	num_sents = len(all_hyps) / 100
 	#Loop through hypotheses
 	for s in xrange(0,num_sents):
-		w = w_vectors[s] # get next weight vector
+		sys.stderr.write("Getting best translation for hyp#"+str(s)+"\n")
+		#w = w_vectors[s] # get next weight vector
 		hyps_for_one_sent = all_hyps[s * 100:s * 100 + 100]
 		#Get best score and hyp from K-best list
-		best_hyp = hyps_for_one_sent[0]
+		best_hyp = list(hyps_for_one_sent[0])
+		#Add features to best hyp
+		best_hyp[2] = best_hyp[2].strip()
+		best_hyp[2] += " len="+str(len(best_hyp[1].split()))
+		num_rus1 = get_untrans_words(best_hyp)
+		best_hyp[2] += " untrans="+str(num_rus1)
 		for i in xrange(0,100):
-			c = predict(best_hyp, hyps_for_one_sent[i])
+			comp_hyp = list(hyps_for_one_sent[i])
+			#Add features to next hyp
+			comp_hyp[2] = comp_hyp[2].strip()
+			comp_hyp[2] += " len="+str(len(comp_hyp[1].split()))
+			num_rus2 = get_untrans_words(comp_hyp)
+			comp_hyp[2] += " untrans="+str(num_rus2)
+			#Predict whether comp hyp is better that current best hyp			
+			c = predict(best_hyp, comp_hyp)
 			if c == 1:
-				best_hyp = hyps_for_one_sent[i]
+				best_hyp = comp_hyp
 		best = best_hyp[1]
 		try:
 			#Write best hypothesis to stdout

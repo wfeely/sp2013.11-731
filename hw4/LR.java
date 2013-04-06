@@ -16,14 +16,18 @@ public class LR{
 //Logistic Regression data structures
 private static double[] weightvector;
 private static final double rate = 0.0001;
-private static final int numfeatures = 3;
+private static int numfeatures;
+private static int exsize;
 
 public static void main(String[] args){
 
-	if(args.length < 1){
-		System.out.println("Usage: java LR examples-file");
+	if(args.length < 2){
+		System.out.println("Usage: java LR examplefile numexamples numfeatures");
 		System.exit(1);
 	}
+
+	numfeatures = Integer.parseInt(args[2]);
+	exsize = Integer.parseInt(args[1]);
 	
 	try{
 		Scanner infile = new Scanner(new FileReader(args[0]));
@@ -31,11 +35,11 @@ public static void main(String[] args){
 		int index = 0;
 		while(infile.hasNextLine()){
 			System.out.println("Creating model for k-best list num " + index);
-			ArrayList<Double[]> trainexamples = new ArrayList<Double[]>(100);
+			ArrayList<Double[]> trainexamples = new ArrayList<Double[]>(exsize);
 			int n = 0;
 
 			//get the next 100 examples
-			while(infile.hasNextLine() && (n<100)){
+			while(infile.hasNextLine() && (n<exsize)){
 				String line = infile.nextLine();
 				StringTokenizer tok = new StringTokenizer(line);
 				Double[] ex = new Double[numfeatures+1];
@@ -46,7 +50,7 @@ public static void main(String[] args){
 			}//end while
 
 			//train logistic regression
-			if(trainexamples.size()<100){
+			if(trainexamples.size()<exsize){
 				System.out.println("ERROR: trainexamples has only " + trainexamples.size() + " items!");
 				System.exit(1);
 			}
