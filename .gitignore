@@ -11,6 +11,8 @@ project/plugins/project/
 project/data/
 project/project_proposal.tex
 hw2/WN
+hw4/bleu.pyc
+hw4/meteor-1.4
 wfeely_mandarin_presentation.pdf
 
 # Scala-IDE specific
