@@ -23,23 +23,18 @@ test=${lang}test
 test_ar=${lang}test.${lang}
 test_en=${lang}test.en
 
-#Copy data files to moses folder
+#Copy data files to moses corpus folder
 mkdir -p ~/github/mosesdecoder/corpus
-cp data/${train_ar} ~/github/mosesdecoder/corpus
-cp data/${train_en} ~/github/mosesdecoder/corpus
-cp data/${dev_ar} ~/github/mosesdecoder/corpus
-cp data/${dev_en} ~/github/mosesdecoder/corpus
-cp data/${test_ar} ~/github/mosesdecoder/corpus
-cp data/${test_en} ~/github/mosesdecoder/corpus
+cp -r data/${lang} ~/github/mosesdecoder/corpus/${lang}
 
 ################TRAINING################
 echo "Moses Training phase (approx 7 min egy)"
 #Make arpa language model for moses
 echo "Creating ngram LM based on English side of training data..."
-ngram-count -unk -text ~/github/mosesdecoder/corpus/${train_en} -lm ~/github/mosesdecoder/corpus/en.arpa
+ngram-count -unk -text ~/github/mosesdecoder/corpus/${lang}/${train_en} -lm ~/github/mosesdecoder/corpus/${lang}/en.arpa
 
 #Convert LM to binary format
-~/github/mosesdecoder/bin/build_binary ~/github/mosesdecoder/corpus/en.arpa ~/github/mosesdecoder/corpus/en.binlm
+~/github/mosesdecoder/bin/build_binary ~/github/mosesdecoder/corpus/${lang}/en.arpa ~/github/mosesdecoder/corpus/${lang}/en.binlm
 
 mkdir -p ~/github/mosesdecoder/working
 mkdir -p ~/github/mosesdecoder/working/${lang}
@@ -48,13 +43,13 @@ cd ~/github/mosesdecoder/working/${lang}
 
 #Run Moses translation model training
 echo "Training models using training set..."
-nohup nice ~/github/mosesdecoder/scripts/training/train-model.perl -root-dir train -corpus ~/github/mosesdecoder/corpus/${train} -f ${lang} -e en -alignment grow-diag-final-and -reordering msd-bidirectional-fe -lm 0:3:$HOME/github/mosesdecoder/corpus/en.binlm:8 -external-bin-dir ~/github/mosesdecoder/tools/ -cores 2 >& ~/github/mosesdecoder/working/${lang}/training.out #&
+nohup nice ~/github/mosesdecoder/scripts/training/train-model.perl -root-dir train -corpus ~/github/mosesdecoder/corpus/${lang}/${train} -f ${lang} -e en -alignment grow-diag-final-and -reordering msd-bidirectional-fe -lm 0:3:$HOME/github/mosesdecoder/corpus/${lang}/en.binlm:8 -external-bin-dir ~/github/mosesdecoder/tools/ -cores 2 >& ~/github/mosesdecoder/working/${lang}/training.out #&
 
 ################TUNING################
 echo "Moses Tuning phase (approx 2 hr egy)"
 #Run Moses tuning for translation model
 echo "Tuning models using dev set..."
-nohup nice ~/github/mosesdecoder/scripts/training/mert-moses.pl ~/github/mosesdecoder/corpus/${dev_ar} ~/github/mosesdecoder/corpus/${dev_en} ~/github/mosesdecoder/bin/moses train/model/moses.ini --mertdir ~/github/mosesdecoder/bin/ --decoder-flags="-threads 4" &> mert.out #&
+nohup nice ~/github/mosesdecoder/scripts/training/mert-moses.pl ~/github/mosesdecoder/corpus/${lang}/${dev_ar} ~/github/mosesdecoder/corpus/${lang}/${dev_en} ~/github/mosesdecoder/bin/moses train/model/moses.ini --mertdir ~/github/mosesdecoder/bin/ --decoder-flags="-threads 4" &> mert.out #&
 
 #Binarise phrase table and lexical reordering models
 echo "Binarising phrase table and lexical reordering models..."
@@ -76,13 +71,13 @@ mkdir -p ~/github/mosesdecoder/working/${lang}/binarised-model
 #echo "Moses Testing phase (approx 3 min egy)"
 #Filter model for testing
 #echo "Filtering model for testing..."
-#~/github/mosesdecoder/scripts/training/filter-model-given-input.pl filtered-${test} mert-work/moses.ini ~/github/mosesdecoder/corpus/${test_ar} -Binarizer ~/github/mosesdecoder/bin/processPhraseTable
+#~/github/mosesdecoder/scripts/training/filter-model-given-input.pl filtered-${test} mert-work/moses.ini ~/github/mosesdecoder/corpus/${lang}/${test_ar} -Binarizer ~/github/mosesdecoder/bin/processPhraseTable
 
 #Translate test set and get BLEU score
 #echo "Translating test set..."
-#nohup nice ~/github/mosesdecoder/bin/moses -f ~/github/mosesdecoder/working/${lang}/filtered-${test}/moses.ini < ~/github/mosesdecoder/corpus/${test_ar} > ~/github/mosesdecoder/working/${lang}/${test}.translated.en 2> ~/github/mosesdecoder/working/${lang}/${test}.out #&
+#nohup nice ~/github/mosesdecoder/bin/moses -f ~/github/mosesdecoder/working/${lang}/filtered-${test}/moses.ini < ~/github/mosesdecoder/corpus/${lang}/${test_ar} > ~/github/mosesdecoder/working/${lang}/${test}.translated.en 2> ~/github/mosesdecoder/working/${lang}/${test}.out #&
 #echo "Scoring translation using BLEU..."
-#~/github/mosesdecoder/scripts/generic/multi-bleu.perl -lc ~/github/mosesdecoder/corpus/${test_en} < ~/github/mosesdecoder/working/${lang}/${test}.translated.en
+#~/github/mosesdecoder/scripts/generic/multi-bleu.perl -lc ~/github/mosesdecoder/corpus/${lang}/${test_en} < ~/github/mosesdecoder/working/${lang}/${test}.translated.en
 
 #Let user know we've finished, and print time elapsed
 echo "Done!"
