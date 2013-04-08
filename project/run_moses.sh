@@ -36,10 +36,10 @@ cp data/${test_en} ~/github/mosesdecoder/corpus
 echo "Moses Training phase"
 #Make arpa language model for moses
 echo "Creating ngram LM based on English side of training data..."
-ngram-count -text ~/github/mosesdecoder/corpus/${train_en} -lm ~/github/mosesdecoder/corpus/en.arpa
+ngram-count -unk -text ~/github/mosesdecoder/corpus/${train_en} -lm ~/github/mosesdecoder/corpus/en.arpa
 
 #Convert LM to binary format
-~/mosesdecoder/bin/build_binary ~/github/mosesdecoder/corpus/en.arpa ~/github/mosesdecoder/corpus/en.binlm
+~/github/mosesdecoder/bin/build_binary ~/github/mosesdecoder/corpus/en.arpa ~/github/mosesdecoder/corpus/en.binlm
 
 mkdir -p ~/github/mosesdecoder/working
 mkdir -p ~/github/mosesdecoder/working/${lang}
