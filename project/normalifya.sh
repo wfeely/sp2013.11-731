@@ -3,7 +3,7 @@
 #Normalize alif and ya
 
 #set file to convert
-file="data/egylev/egylevtest.egylev"
+file="inputfile"
 
 sed 's/أ/ا/g' $file |
 sed 's/إ/ا/g' |
@@ -17,4 +17,4 @@ sed 's/ً//g' |
 sed 's/ٌ//g' | 
 sed 's/ٍ//g' |
 sed 's/ْ//g' | 
-sed 's/ّ//g' > data/egylev/temp.txt #change output dir
+sed 's/ّ//g' > temp #change output dir
