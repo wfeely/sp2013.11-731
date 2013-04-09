@@ -1,7 +1,7 @@
 #!/bin/bash
 #run_moses.sh
 #Weston Feely
-#4/8/13
+#4/9/13
 
 #Check for required arg
 if [[ -z "$1" ]]; then
@@ -10,8 +10,9 @@ if [[ -z "$1" ]]; then
 fi
 lang=$1
 
-#Get start time
+#Get start time and print current time
 T="$(date +%s)"
+date
 
 #Set up data filenames
 train=${lang}train
@@ -49,7 +50,7 @@ nohup nice ~/github/mosesdecoder/scripts/training/train-model.perl -root-dir tra
 echo "Moses Tuning phase (approx 1.5 hr egy)"
 #Run Moses tuning for translation model
 echo "Tuning models using dev set..."
-nohup nice ~/github/mosesdecoder/scripts/training/mert-moses.pl ~/github/mosesdecoder/corpus/${lang}/${dev_ar} ~/github/mosesdecoder/corpus/#${lang}/${dev_en} ~/github/mosesdecoder/bin/moses train/model/moses.ini --mertdir ~/github/mosesdecoder/bin/ --decoder-flags="-threads 4" &> mert.out #&
+nohup nice ~/github/mosesdecoder/scripts/training/mert-moses.pl ~/github/mosesdecoder/corpus/${lang}/${dev_ar} ~/github/mosesdecoder/corpus/${lang}/${dev_en} ~/github/mosesdecoder/bin/moses train/model/moses.ini --mertdir ~/github/mosesdecoder/bin/ --decoder-flags="-threads 4" &> mert.out #&
 
 #Binarise phrase table and lexical reordering models
 echo "Binarising phrase table and lexical reordering models..."
@@ -84,3 +85,4 @@ mkdir -p ~/github/mosesdecoder/working/${lang}/binarised-model
 echo "Done!"
 T="$(($(date +%s)-T))"
 printf "Time elapsed: %02d:%02d:%02d:%02d\n" "$((T/86400))" "$((T/3600%24))" "$((T/60%60))" "$((T%60))"
+date
