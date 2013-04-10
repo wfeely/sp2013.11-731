@@ -84,5 +84,5 @@ mkdir -p ~/github/mosesdecoder/working/${lang}/binarised-model
 #Let user know we've finished, and print time elapsed
 echo "Done!"
 T="$(($(date +%s)-T))"
-printf "Time elapsed: %02d:%02d:%02d:%02d\n" "$((T/86400))" "$((T/3600%24))" "$((T/60%60))" "$((T%60))"
 date
+printf "Time elapsed: %02d:%02d:%02d:%02d\n" "$((T/86400))" "$((T/3600%24))" "$((T/60%60))" "$((T%60))"
