@@ -1,7 +1,7 @@
 #!/bin/bash
 #run_moses.sh
 #Weston Feely
-#4/9/13
+#4/10/13
 
 #Check for required arg
 if [[ -z "$1" ]]; then
@@ -25,7 +25,7 @@ test_ar=${lang}test.${lang}
 test_en=${lang}test.en
 
 ################TRAINING################
-echo "Moses Training phase (approx 10 mins egy)"
+echo "Moses Training phase"
 #Copy data files to moses corpus folder
 mkdir -p ~/github/mosesdecoder/corpus
 cp -r data/${lang} ~/github/mosesdecoder/corpus/${lang}
@@ -69,7 +69,7 @@ mkdir -p ~/github/mosesdecoder/working/${lang}/binarised-model
 #0-0 wbe-msd-bidirectional-fe-allff 6 /home/hermes/github/mosesdecoder/working/${lang}/binarised-model/reordering-table
 
 ################TESTING################
-#echo "Moses Testing phase (approx 7 min egy)"
+#echo "Moses Testing phase"
 #Filter model for testing
 #echo "Filtering model for testing..."
 #~/github/mosesdecoder/scripts/training/filter-model-given-input.pl filtered-${test} mert-work/moses.ini ~/github/mosesdecoder/corpus/${lang}/${test_ar} -Binarizer ~/github/mosesdecoder/bin/processPhraseTable
