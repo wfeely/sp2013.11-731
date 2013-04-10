@@ -3,9 +3,9 @@
 #Weston Feely
 #4/9/13
 
-echo "Running Moses on EGY..."
+echo "Running Moses training and tuning on EGY..."
 ./run_moses.sh egy
-#echo "Running Moses on LEV..."
-#./run_moses.sh lev
-#echo "Running Moses on EGYLEV..."
-#./run_moses.sh egylev
+echo "Running Moses training and tuning on LEV..."
+./run_moses.sh lev
+echo "Running Moses training and tuning on EGYLEV..."
+./run_moses.sh egylev

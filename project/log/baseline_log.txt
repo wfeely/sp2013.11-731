@@ -1,0 +1,73 @@
+Running Moses training and tuning on EGY...
+Wed Apr 10 02:05:20 EDT 2013
+Moses Training phase (approx 10 mins egy)
+Creating ngram LM based on English side of training data...
+warning: discount coeff 1 is out of range: 0
+Reading /home/hermes/github/mosesdecoder/corpus/egy/en.arpa
+----5---10---15---20---25---30---35---40---45---50---55---60---65---70---75---80---85---90---95--100
+****************************************************************************************************
+SUCCESS
+Training models using training set...
+Moses Tuning phase (approx 1.5 hr egy)
+Tuning models using dev set...
+Binarising phrase table and lexical reordering models...
+processing ptree for train/model/phrase-table.gz
+.................................distinct source phrases: 339290 distinct first words of source phrases: 44037 number of phrase pairs (line count): 728860
+Count of lines with missing alignments: 0/728860
+WARNING: there are src voc entries with no phrase translation: count 12205
+There exists phrase translations for 31832 entries
+processLexicalTable v0.1 by Konrad Rawlik
+processing train/model/reordering-table.wbe-msd-bidirectional-fe.gz to binarised-model/reordering-table.*
+........................................................................Done!
+Wed Apr 10 04:51:59 EDT 2013
+Time elapsed: 00:02:46:39
+Running Moses training and tuning on LEV...
+Wed Apr 10 04:51:59 EDT 2013
+Moses Training phase (approx 10 mins egy)
+Creating ngram LM based on English side of training data...
+warning: discount coeff 1 is out of range: 0
+Reading /home/hermes/github/mosesdecoder/corpus/lev/en.arpa
+----5---10---15---20---25---30---35---40---45---50---55---60---65---70---75---80---85---90---95--100
+****************************************************************************************************
+SUCCESS
+Training models using training set...
+Moses Tuning phase (approx 1.5 hr egy)
+Tuning models using dev set...
+Binarising phrase table and lexical reordering models...
+processing ptree for train/model/phrase-table.gz
+..................................................[phrase:500000]
+...............................................distinct source phrases: 977044 distinct first words of source phrases: 100447 number of phrase pairs (line count): 1959561
+Count of lines with missing alignments: 0/1959561
+WARNING: there are src voc entries with no phrase translation: count 28331
+There exists phrase translations for 72116 entries
+processLexicalTable v0.1 by Konrad Rawlik
+processing train/model/reordering-table.wbe-msd-bidirectional-fe.gz to binarised-model/reordering-table.*
+...................................................................................................................................................................................................Done!
+Wed Apr 10 08:02:54 EDT 2013
+Time elapsed: 00:03:10:55
+Running Moses training and tuning on EGYLEV...
+Wed Apr 10 08:02:54 EDT 2013
+Moses Training phase (approx 10 mins egy)
+Creating ngram LM based on English side of training data...
+warning: discount coeff 1 is out of range: 0
+Reading /home/hermes/github/mosesdecoder/corpus/egylev/en.arpa
+----5---10---15---20---25---30---35---40---45---50---55---60---65---70---75---80---85---90---95--100
+****************************************************************************************************
+SUCCESS
+Training models using training set...
+Moses Tuning phase (approx 1.5 hr egy)
+Tuning models using dev set...
+Binarising phrase table and lexical reordering models...
+processing ptree for train/model/phrase-table.gz
+..................................................[phrase:500000]
+..................................................[phrase:1000000]
+.................................distinct source phrases: 1335226 distinct first words of source phrases: 123708 number of phrase pairs (line count): 2692428
+Count of lines with missing alignments: 0/2692428
+WARNING: there are src voc entries with no phrase translation: count 33705
+There exists phrase translations for 90003 entries
+processLexicalTable v0.1 by Konrad Rawlik
+processing train/model/reordering-table.wbe-msd-bidirectional-fe.gz to binarised-model/reordering-table.*
+.............................................................................................................................................................................................................................................................................Done!
+Wed Apr 10 13:44:30 EDT 2013
+Time elapsed: 00:05:41:36
+
