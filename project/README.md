@@ -34,14 +34,21 @@ To Do List:
 - (In Progress) Linguistic analysis of Egyptian & Levantine morphosyntax - Serena
 - (Done) Download Moses, get familiar with usage, set up script to run on each data set - Wes
 - (Done) Read MADA paper, download MADA, get familiar with usage - Serena
-- (Done) Run Egyptian text through MADA - Serena
-- (In Progress) Do Levantine & English data pre-processing - Serena
-	- (DONE) Alif and ya normalization: normalifya.sh
-	- ...
 - (In Progress) Run Moses to get initial baseline (1) - Wes
 - (In Progress) Run MADA on each data set - Serena
+- (In Progress) Run CALIMA on each data set - Serena
 - Run Moses to get MADA baseline (2) - Wes
-- Run CALIMA on each data set - Serena
 - Run Moses to get CALIMA baseline (3) - Wes
+- (In Progress) Do Levantine & English data pre-processing - Serena
+	- (Done) Alif and ya normalization: normalifya.sh
+	- (In Progress) Lexical replacement rules
+	- WH-movement reordering
 - Implement our own Egyptian analyzer in FOMA - Wes & Serena
+	- (Done) Acquire Egyptian vocab
+	- Divide vocab into POS categories, make FOMA lexicon files
+	- Write affix analysis into lexicon files
+	- Write morphological rules into FOMA file
+	- Get precision-recall on dev set, update analysis accordingly
+	- Get precision-recall on test set
+- Run Levantine pre-processor and FOMA analyzer on each data set - Serena
 - Run Moses to get final condition (4)
