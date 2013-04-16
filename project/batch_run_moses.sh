@@ -1,11 +1,11 @@
 #!/bin/bash
 #batch_run_moses.sh
 #Weston Feely
-#4/10/13
+#4/16/13
 
-echo "Running Moses training and tuning on EGYMADA..."
+echo "Running Moses testing on EGYMADA..."
 ./run_moses.sh egymada
-echo "Running Moses training and tuning on LEVMADA..."
+echo "Running Moses testing on LEVMADA..."
 ./run_moses.sh levmada
-echo "Running Moses training and tuning on EGYLEVMADA..."
+echo "Running Moses testing on EGYLEVMADA..."
 ./run_moses.sh egylevmada
