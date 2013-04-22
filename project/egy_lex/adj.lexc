@@ -1,12 +1,40 @@
 !!!adj.lexc!!!
 
 LEXICON Root
+Prefixes;
 Adj;
+
+LEXICON Prefixes
+ال+:ال^ Adj;
 
 LEXICON Suffixes
 0:0 #;
 
 LEXICON Adj
+!Color adjectives
+ابيض Suffixes;
+بيضا Suffixes;
+بيض Suffixes;
+اسود Suffixes;
+سودا Suffixes;
+سود Suffixes;
+احمر Suffixes;
+حمرا Suffixes;
+حمر Suffixes;
+اخضر Suffixes;
+خضرا Suffixes;
+خضر Suffixes;
+ازرق Suffixes;
+زرقا Suffixes;
+زرق Suffixes;
+اصفر Suffixes;
+صفرا Suffixes;
+صفر Suffixes;
+برتقاني Suffixes;
+بمبي Suffixes;
+بنفسجي Suffixes;
+رصاصي Suffixes;
+!Other adjectives
 ثبع Suffixes;
 ثبظ Suffixes;
 ثبغ Suffixes;
