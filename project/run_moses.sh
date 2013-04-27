@@ -47,26 +47,27 @@ echo "Training models using training set..."
 nohup nice ~/github/mosesdecoder/scripts/training/train-model.perl -root-dir train -corpus ~/github/mosesdecoder/corpus/${lang}/${train} -f ${lang} -e en -alignment grow-diag-final-and -reordering msd-bidirectional-fe -lm 0:3:$HOME/github/mosesdecoder/corpus/${lang}/en.binlm:8 -external-bin-dir ~/github/mosesdecoder/tools/ -cores 2 >& ~/github/mosesdecoder/working/${lang}/training.out #&
 
 ################TUNING################
-#echo "Moses Tuning phase (approx 1.5 hr egy)"
+echo "Moses Tuning phase"
 #Run Moses tuning for translation model
-#echo "Tuning models using dev set..."
-#nohup nice ~/github/mosesdecoder/scripts/training/mert-moses.pl ~/github/mosesdecoder/corpus/${lang}/${dev_ar} ~/github/mosesdecoder/corpus/${lang}/${dev_en} ~/github/mosesdecoder/bin/moses train/model/moses.ini --mertdir ~/github/mosesdecoder/bin/ --decoder-flags="-threads 4" &> mert.out #&
+echo "Tuning models using dev set..."
+nohup nice ~/github/mosesdecoder/scripts/training/mert-moses.pl ~/github/mosesdecoder/corpus/${lang}/${dev_ar} ~/github/mosesdecoder/corpus/${lang}/${dev_en} ~/github/mosesdecoder/bin/moses train/model/moses.ini --mertdir ~/github/mosesdecoder/bin/ --decoder-flags="-threads 4" &> mert.out #&
 
 #Binarise phrase table and lexical reordering models
-#echo "Binarising phrase table and lexical reordering models..."
-#mkdir -p ~/github/mosesdecoder/working/${lang}/binarised-model
-#~/github/mosesdecoder/bin/processPhraseTable -ttable 0 0 train/model/phrase-table.gz -nscores 5 -out binarised-model/phrase-table
-#~/github/mosesdecoder/bin/processLexicalTable -in train/model/reordering-table.wbe-msd-bidirectional-fe.gz -out binarised-model/reordering-table
+echo "Binarising phrase table and lexical reordering models..."
+mkdir -p ~/github/mosesdecoder/working/${lang}/binarised-model
+~/github/mosesdecoder/bin/processPhraseTable -ttable 0 0 train/model/phrase-table.gz -nscores 5 -out binarised-model/phrase-table
+~/github/mosesdecoder/bin/processLexicalTable -in train/model/reordering-table.wbe-msd-bidirectional-fe.gz -out binarised-model/reordering-table
 
 #Edit moses.ini to point to binarised files
-#sed "s/^0 0 0 5 \/home\/hermes\/github\/mosesdecoder\/working\/${lang}\/train\/model\/phrase-table.gz$/1 0 0 5 \/home\/hermes\/github\/mosesdecoder\/working\/${lang}\/binarised-model\/phrase-table/" ~/github/mosesdecoder/working/${lang}/train/model/moses.ini > ~/github/mosesdecoder/working/${lang}/train/model/moses.ini.fix
-#sed "s/^0-0 wbe-msd-bidirectional-fe-allff 6 \/home\/hermes\/github\/mosesdecoder\/working\/${lang}\/train\/model\/reordering-table.wbe-msd-bidirectional-fe.gz$/0-0 wbe-msd-bidirectional-fe-allff 6 \/home\/hermes\/github\/mosesdecoder\/working\/${lang}\/binarised-model\/reordering-table/" ~/github/mosesdecoder/working/${lang}/train/model/moses.ini.fix > ~/github/mosesdecoder/working/${lang}/train/model/moses.ini
+sed "s/^0 0 0 5 \/home\/hermes\/github\/mosesdecoder\/working\/${lang}\/train\/model\/phrase-table.gz$/1 0 0 5 \/home\/hermes\/github\/mosesdecoder\/working\/${lang}\/binarised-model\/phrase-table/" ~/github/mosesdecoder/working/${lang}/train/model/moses.ini > ~/github/mosesdecoder/working/${lang}/train/model/moses.ini.fix
+sed "s/^0-0 wbe-msd-bidirectional-fe-allff 6 \/home\/hermes\/github\/mosesdecoder\/working\/${lang}\/train\/model\/reordering-table.wbe-msd-bidirectional-fe.gz$/0-0 wbe-msd-bidirectional-fe-allff 6 \/home\/hermes\/github\/mosesdecoder\/working\/${lang}\/binarised-model\/reordering-table/" ~/github/mosesdecoder/working/${lang}/train/model/moses.ini.fix > ~/github/mosesdecoder/working/${lang}/train/model/moses.ini
 
 ################TESTING################
 echo "Moses Testing phase"
 #Filter model for testing
 echo "Filtering model for testing..."
 ~/github/mosesdecoder/scripts/training/filter-model-given-input.pl filtered-${test} mert-work/moses.ini ~/github/mosesdecoder/corpus/${lang}/${test_ar} -Binarizer ~/github/mosesdecoder/bin/processPhraseTable
+#~/github/mosesdecoder/scripts/training/filter-model-given-input.pl filtered-${test} train/model/moses.ini ~/github/mosesdecoder/corpus/${lang}/${test_ar} -Binarizer ~/github/mosesdecoder/bin/processPhraseTable
 
 #Translate test set and get BLEU score
 echo "Translating test set..."
