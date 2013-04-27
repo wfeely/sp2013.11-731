@@ -17,9 +17,11 @@ read lexc egy_lex/pron.lexc
 define pron;
 read lexc egy_lex/verb.lexc
 define verb;
+read lexc egy_lex/negverb.lexc
+define negverb;
 
 ! Combine lexica into single lexicon
-regex adj | adv | conj | noun | prep | verb;
+regex adj | adv | conj | noun | prep | verb | negverb;
 define Lexicon;
 
 ! Cleanup: remove morpheme boundaries
