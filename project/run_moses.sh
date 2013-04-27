@@ -1,7 +1,7 @@
 #!/bin/bash
 #run_moses.sh
 #Weston Feely
-#4/16/13
+#4/26/13
 
 #Check for required arg
 if [[ -z "$1" ]]; then
@@ -25,26 +25,26 @@ test_ar=${lang}test.${lang}
 test_en=${lang}test.en
 
 ################TRAINING################
-#echo "Moses Training phase"
+echo "Moses Training phase"
 #Copy data files to moses corpus folder
-#mkdir -p ~/github/mosesdecoder/corpus
-#cp -r data/${lang} ~/github/mosesdecoder/corpus/${lang}
+mkdir -p ~/github/mosesdecoder/corpus
+cp -r data/${lang} ~/github/mosesdecoder/corpus/${lang}
 
 #Make arpa language model for moses
-#echo "Creating ngram LM based on English side of training data..."
-#ngram-count -unk -text ~/github/mosesdecoder/corpus/${lang}/${train_en} -lm ~/github/mosesdecoder/corpus/${lang}/en.arpa
+echo "Creating ngram LM based on English side of training data..."
+ngram-count -unk -text ~/github/mosesdecoder/corpus/${lang}/${train_en} -lm ~/github/mosesdecoder/corpus/${lang}/en.arpa
 
 #Convert LM to binary format
-#~/github/mosesdecoder/bin/build_binary ~/github/mosesdecoder/corpus/${lang}/en.arpa ~/github/mosesdecoder/corpus/${lang}/en.binlm
+~/github/mosesdecoder/bin/build_binary ~/github/mosesdecoder/corpus/${lang}/en.arpa ~/github/mosesdecoder/corpus/${lang}/en.binlm
 
-#mkdir -p ~/github/mosesdecoder/working
-#mkdir -p ~/github/mosesdecoder/working/${lang}
+mkdir -p ~/github/mosesdecoder/working
+mkdir -p ~/github/mosesdecoder/working/${lang}
 
 cd ~/github/mosesdecoder/working/${lang} # keep this line uncommented for all runs
 
 #Run Moses translation model training
-#echo "Training models using training set..."
-#nohup nice ~/github/mosesdecoder/scripts/training/train-model.perl -root-dir train -corpus ~/github/mosesdecoder/corpus/${lang}/${train} -f ${lang} -e en -alignment grow-diag-final-and -reordering msd-bidirectional-fe -lm 0:3:$HOME/github/mosesdecoder/corpus/${lang}/en.binlm:8 -external-bin-dir ~/github/mosesdecoder/tools/ -cores 2 >& ~/github/mosesdecoder/working/${lang}/training.out #&
+echo "Training models using training set..."
+nohup nice ~/github/mosesdecoder/scripts/training/train-model.perl -root-dir train -corpus ~/github/mosesdecoder/corpus/${lang}/${train} -f ${lang} -e en -alignment grow-diag-final-and -reordering msd-bidirectional-fe -lm 0:3:$HOME/github/mosesdecoder/corpus/${lang}/en.binlm:8 -external-bin-dir ~/github/mosesdecoder/tools/ -cores 2 >& ~/github/mosesdecoder/working/${lang}/training.out #&
 
 ################TUNING################
 #echo "Moses Tuning phase (approx 1.5 hr egy)"
@@ -58,15 +58,9 @@ cd ~/github/mosesdecoder/working/${lang} # keep this line uncommented for all ru
 #~/github/mosesdecoder/bin/processPhraseTable -ttable 0 0 train/model/phrase-table.gz -nscores 5 -out binarised-model/phrase-table
 #~/github/mosesdecoder/bin/processLexicalTable -in train/model/reordering-table.wbe-msd-bidirectional-fe.gz -out binarised-model/reordering-table
 
-#TODO: After training and tuning, edit ~/github/mosesdecoder/working/${lang}/train/model/moses.ini to point to binarised files
-#Replace:
-#0 0 0 5 /home/hermes/github/mosesdecoder/working/${lang}/train/model/phrase-table.gz
-#With:
-#1 0 0 5 /home/hermes/github/mosesdecoder/working/${lang}/binarised-model/phrase-table
-#Replace:
-#0-0 wbe-msd-bidirectional-fe-allff 6 /home/hermes/github/mosesdecoder/working/${lang}/train/model/reordering-table.wbe-msd-bidirectional-fe.gz
-#With:
-#0-0 wbe-msd-bidirectional-fe-allff 6 /home/hermes/github/mosesdecoder/working/${lang}/binarised-model/reordering-table
+#Edit moses.ini to point to binarised files
+#sed "s/^0 0 0 5 \/home\/hermes\/github\/mosesdecoder\/working\/${lang}\/train\/model\/phrase-table.gz$/1 0 0 5 \/home\/hermes\/github\/mosesdecoder\/working\/${lang}\/binarised-model\/phrase-table/" ~/github/mosesdecoder/working/${lang}/train/model/moses.ini > ~/github/mosesdecoder/working/${lang}/train/model/moses.ini.fix
+#sed "s/^0-0 wbe-msd-bidirectional-fe-allff 6 \/home\/hermes\/github\/mosesdecoder\/working\/${lang}\/train\/model\/reordering-table.wbe-msd-bidirectional-fe.gz$/0-0 wbe-msd-bidirectional-fe-allff 6 \/home\/hermes\/github\/mosesdecoder\/working\/${lang}\/binarised-model\/reordering-table/" ~/github/mosesdecoder/working/${lang}/train/model/moses.ini.fix > ~/github/mosesdecoder/working/${lang}/train/model/moses.ini
 
 ################TESTING################
 echo "Moses Testing phase"
