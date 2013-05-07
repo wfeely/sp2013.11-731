@@ -1,7 +1,7 @@
 #!/bin/bash
 #batch_run_moses.sh
 #Weston Feely
-#4/29/13
+#5/7/13
 
 #echo "Running Moses testing on EGY..."
 #./run_moses.sh egy
@@ -19,7 +19,12 @@
 
 #echo "Running Moses testing on EGY-MISH..."
 #./run_moses.sh egymish
-echo "Running Moses testing on LEV-MISH..."
-./run_moses.sh levmish
-echo "Running Moses testing on EGYLEV-MISH..."
-./run_moses.sh egylevmish
+#echo "Running Moses testing on LEV-MISH..."
+#./run_moses.sh levmish
+#echo "Running Moses testing on EGYLEV-MISH..."
+#./run_moses.sh egylevmish
+
+echo "Running Moses testing on EGYLEV-AN..."
+./run_moses.sh egylevan
+echo "Running Moses testing on EGYLEV-TRANS..."
+./run_moses.sh egylevtrans
