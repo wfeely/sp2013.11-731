@@ -1,14 +1,40 @@
 #!/bin/bash
 #run_moses.sh
 #Weston Feely
-#4/26/13
+#5/8/13
+#This script runs Moses, which should be installed in ${moses_dir}, on the data in ${data_dir}/${language}
+#The language data folder is expected to contained files called:
+# ${language}train.${language}
+# ${language}train.en
+# ${language}dev.${language}
+# ${language}dev.en
+# ${language}test.${language}
+# ${language}test.en
 
-#Check for required arg
-if [[ -z "$1" ]]; then
-    echo "Usage: ./run_moses.sh language_prefix"
-    exit 1
+#Check for required arg1
+if [ -z "$1" ]; then
+	echo "Usage: ./run_moses.sh language moses_dir data_dir"
+	exit 1
 fi
+
+#Setup language and default moses and data paths
 lang=$1
+moses_dir=`readlink -f ~/github/mosesdecoder`
+data_dir=`readlink -f ./data`
+
+#Check for optional arg2 and arg3
+if [ ! -z "$2" ]; then
+	if [ -d "$2" ]; then
+		#Change moses directory to user-specified dir
+		moses_dir=`readlink -f $2`
+	fi
+fi
+if [ ! -z "$3" ]; then
+	if [ -d "$3" ]; then
+		#Change data directory to user-specified dir
+		data_dir=`readlink -f $3`
+	fi
+fi
 
 #Get start time and print current time
 T="$(date +%s)"
@@ -16,65 +42,66 @@ date
 
 #Set up data filenames
 train=${lang}train
-train_ar=${lang}train.${lang}
+#train_fr=${lang}train.${lang} # unnecessary variable, but this file must exist in ${data_dir}/${lang}
 train_en=${lang}train.en
-dev_ar=${lang}dev.${lang}
+dev_fr=${lang}dev.${lang}
 dev_en=${lang}dev.en
 test=${lang}test
-test_ar=${lang}test.${lang}
+test_fr=${lang}test.${lang}
 test_en=${lang}test.en
 
 ################TRAINING################
 echo "Moses Training phase"
 #Copy data files to moses corpus folder
-mkdir -p ~/github/mosesdecoder/corpus
-cp -r data/${lang} ~/github/mosesdecoder/corpus/${lang}
+mkdir -p ${moses_dir}/corpus
+cp -r ${data_dir}/${lang} ${moses_dir}/corpus/${lang}
 
 #Make arpa language model for moses
 echo "Creating ngram LM based on English side of training data..."
-ngram-count -unk -text ~/github/mosesdecoder/corpus/${lang}/${train_en} -lm ~/github/mosesdecoder/corpus/${lang}/en.arpa
+ngram-count -unk -text ${moses_dir}/corpus/${lang}/${train_en} -lm ${moses_dir}/corpus/${lang}/en.arpa
 
 #Convert LM to binary format
-~/github/mosesdecoder/bin/build_binary ~/github/mosesdecoder/corpus/${lang}/en.arpa ~/github/mosesdecoder/corpus/${lang}/en.binlm
+${moses_dir}/bin/build_binary ${moses_dir}/corpus/${lang}/en.arpa ${moses_dir}/corpus/${lang}/en.binlm
 
-mkdir -p ~/github/mosesdecoder/working
-mkdir -p ~/github/mosesdecoder/working/${lang}
+mkdir -p ${moses_dir}/working
+mkdir -p ${moses_dir}/working/${lang}
 
-cd ~/github/mosesdecoder/working/${lang} # keep this line uncommented for all runs
+cd ${moses_dir}/working/${lang} # keep this line uncommented for all runs
 
 #Run Moses translation model training
 echo "Training models using training set..."
-nohup nice ~/github/mosesdecoder/scripts/training/train-model.perl -root-dir train -corpus ~/github/mosesdecoder/corpus/${lang}/${train} -f ${lang} -e en -alignment grow-diag-final-and -reordering msd-bidirectional-fe -lm 0:3:$HOME/github/mosesdecoder/corpus/${lang}/en.binlm:8 -external-bin-dir ~/github/mosesdecoder/tools/ -cores 2 >& ~/github/mosesdecoder/working/${lang}/training.out #&
+nohup nice ${moses_dir}/scripts/training/train-model.perl -root-dir train -corpus ${moses_dir}/corpus/${lang}/${train} -f ${lang} -e en -alignment grow-diag-final-and -reordering msd-bidirectional-fe -lm 0:3:$HOME/github/mosesdecoder/corpus/${lang}/en.binlm:8 -external-bin-dir ${moses_dir}/tools/ -cores 2 >& ${moses_dir}/working/${lang}/training.out #&
 
 ################TUNING################
 echo "Moses Tuning phase"
 #Run Moses tuning for translation model
 echo "Tuning models using dev set..."
-nohup nice ~/github/mosesdecoder/scripts/training/mert-moses.pl ~/github/mosesdecoder/corpus/${lang}/${dev_ar} ~/github/mosesdecoder/corpus/${lang}/${dev_en} ~/github/mosesdecoder/bin/moses train/model/moses.ini --mertdir ~/github/mosesdecoder/bin/ --decoder-flags="-threads 4" &> mert.out #&
+nohup nice ${moses_dir}/scripts/training/mert-moses.pl ${moses_dir}/corpus/${lang}/${dev_fr} ${moses_dir}/corpus/${lang}/${dev_en} ${moses_dir}/bin/moses train/model/moses.ini --mertdir ${moses_dir}/bin/ --decoder-flags="-threads 4" &> mert.out #&
 
 #Binarise phrase table and lexical reordering models
 echo "Binarising phrase table and lexical reordering models..."
-mkdir -p ~/github/mosesdecoder/working/${lang}/binarised-model
-~/github/mosesdecoder/bin/processPhraseTable -ttable 0 0 train/model/phrase-table.gz -nscores 5 -out binarised-model/phrase-table
-~/github/mosesdecoder/bin/processLexicalTable -in train/model/reordering-table.wbe-msd-bidirectional-fe.gz -out binarised-model/reordering-table
+mkdir -p ${moses_dir}/working/${lang}/binarised-model
+${moses_dir}/bin/processPhraseTable -ttable 0 0 train/model/phrase-table.gz -nscores 5 -out binarised-model/phrase-table
+${moses_dir}/bin/processLexicalTable -in train/model/reordering-table.wbe-msd-bidirectional-fe.gz -out binarised-model/reordering-table
 
 #Edit moses.ini to point to binarised files
-sed "s/^0 0 0 5 \/home\/hermes\/github\/mosesdecoder\/working\/${lang}\/train\/model\/phrase-table.gz$/1 0 0 5 \/home\/hermes\/github\/mosesdecoder\/working\/${lang}\/binarised-model\/phrase-table/" ~/github/mosesdecoder/working/${lang}/train/model/moses.ini > ~/github/mosesdecoder/working/${lang}/train/model/moses.ini.fix
-sed "s/^0-0 wbe-msd-bidirectional-fe-allff 6 \/home\/hermes\/github\/mosesdecoder\/working\/${lang}\/train\/model\/reordering-table.wbe-msd-bidirectional-fe.gz$/0-0 wbe-msd-bidirectional-fe-allff 6 \/home\/hermes\/github\/mosesdecoder\/working\/${lang}\/binarised-model\/reordering-table/" ~/github/mosesdecoder/working/${lang}/train/model/moses.ini.fix > ~/github/mosesdecoder/working/${lang}/train/model/moses.ini
+sed "s/^0 0 0 5 \/home\/hermes\/github\/mosesdecoder\/working\/${lang}\/train\/model\/phrase-table.gz$/1 0 0 5 \/home\/hermes\/github\/mosesdecoder\/working\/${lang}\/binarised-model\/phrase-table/" ${moses_dir}/working/${lang}/train/model/moses.ini > ${moses_dir}/working/${lang}/train/model/moses.ini.fix
+sed "s/^0-0 wbe-msd-bidirectional-fe-allff 6 \/home\/hermes\/github\/mosesdecoder\/working\/${lang}\/train\/model\/reordering-table.wbe-msd-bidirectional-fe.gz$/0-0 wbe-msd-bidirectional-fe-allff 6 \/home\/hermes\/github\/mosesdecoder\/working\/${lang}\/binarised-model\/reordering-table/" ${moses_dir}/working/${lang}/train/model/moses.ini.fix > ${moses_dir}/working/${lang}/train/model/moses.ini
 
 ################TESTING################
 echo "Moses Testing phase"
 #Filter model for testing
 echo "Filtering model for testing..."
-~/github/mosesdecoder/scripts/training/filter-model-given-input.pl filtered-${test} mert-work/moses.ini ~/github/mosesdecoder/corpus/${lang}/${test_ar} -Binarizer ~/github/mosesdecoder/bin/processPhraseTable
-#~/github/mosesdecoder/scripts/training/filter-model-given-input.pl filtered-${test} train/model/moses.ini ~/github/mosesdecoder/corpus/${lang}/${test_ar} -Binarizer ~/github/mosesdecoder/bin/processPhraseTable
+${moses_dir}/scripts/training/filter-model-given-input.pl filtered-${test} mert-work/moses.ini ${moses_dir}/corpus/${lang}/${test_fr} -Binarizer ${moses_dir}/bin/processPhraseTable
+#${moses_dir}/scripts/training/filter-model-given-input.pl filtered-${test} train/model/moses.ini ${moses_dir}/corpus/${lang}/${test_fr} -Binarizer ${moses_dir}/bin/processPhraseTable
 
 #Translate test set and get BLEU score
 echo "Translating test set..."
-nohup nice ~/github/mosesdecoder/bin/moses -f ~/github/mosesdecoder/working/${lang}/filtered-${test}/moses.ini < ~/github/mosesdecoder/corpus/${lang}/${test_ar} > ~/github/mosesdecoder/working/${lang}/${test}.translated.en 2> ~/github/mosesdecoder/working/${lang}/${test}.out #&
+nohup nice ${moses_dir}/bin/moses -f ${moses_dir}/working/${lang}/filtered-${test}/moses.ini < ${moses_dir}/corpus/${lang}/${test_fr} > ${moses_dir}/working/${lang}/${test}.translated.en 2> ${moses_dir}/working/${lang}/${test}.out #&
 echo "Scoring translation using BLEU..."
-~/github/mosesdecoder/scripts/generic/multi-bleu.perl -lc ~/github/mosesdecoder/corpus/${lang}/${test_en} < ~/github/mosesdecoder/working/${lang}/${test}.translated.en > ~/github/mosesdecoder/working/${lang}/${lang}_results.txt
-echo "BLEU score written to ${lang}_results.txt"
+${moses_dir}/scripts/generic/multi-bleu.perl -lc ${moses_dir}/corpus/${lang}/${test_en} < ${moses_dir}/working/${lang}/${test}.translated.en > ${moses_dir}/working/${lang}/${lang}_results.txt
+echo "BLEU score written to ${moses_dir}/working/${lang}/${lang}_results.txt"
+cat ${moses_dir}/working/${lang}/${lang}_results.txt
 
 #Let user know we've finished, and print time elapsed
 echo "Done!"
